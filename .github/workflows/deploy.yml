@@ -26,8 +26,8 @@ jobs:
       - run: npm ci
       - name: Build static site
         env:
-          PAGES_BASE_PATH: /Mononokeno-Kagi-App
-          NEXT_PUBLIC_BASE_PATH: /Mononokeno-Kagi-App
+          PAGES_BASE_PATH: ""
+          NEXT_PUBLIC_BASE_PATH: ""
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
         run: npm run build
