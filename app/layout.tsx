@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
+import type { CSSProperties } from "react";
 import "./globals.css";
+
+const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 
 export const metadata: Metadata = {
   title: "もののけの鍵",
@@ -8,8 +11,8 @@ export const metadata: Metadata = {
     "codex-preview": "development",
   },
   icons: {
-    icon: "/assets/mononoke-no-kagi.png",
-    shortcut: "/assets/mononoke-no-kagi.png",
+    icon: `${basePath}/assets/mononoke-no-kagi.png`,
+    shortcut: `${basePath}/assets/mononoke-no-kagi.png`,
   },
 };
 
@@ -19,7 +22,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ja">
+    <html
+      lang="ja"
+      style={{
+        "--cinecaption-font": `url("${basePath}/fonts/cinecaption227.TTF")`,
+        "--discord-mask": `url("${basePath}/assets/discord-symbol-white.png")`,
+        "--mononoke-logo": `url("${basePath}/assets/mononoke-no-kagi.png")`,
+      } as CSSProperties}
+    >
       <body>{children}</body>
     </html>
   );

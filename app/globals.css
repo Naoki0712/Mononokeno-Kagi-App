@@ -2,7 +2,7 @@
 
 @font-face {
   font-family: "Cinecaption";
-  src: url("/fonts/cinecaption227.TTF") format("truetype");
+  src: var(--cinecaption-font) format("truetype");
   font-style: normal;
   font-weight: 400;
   font-display: swap;
@@ -2540,15 +2540,6 @@ button:focus-visible {
   height: 1em;
 }
 
-.discordLogoutIcon {
-  width: 1.3em;
-  height: 1em;
-  flex: 0 0 auto;
-  background-color: #5865f2;
-  -webkit-mask: url("/assets/discord-symbol-white.png") center / contain no-repeat;
-  mask: url("/assets/discord-symbol-white.png") center / contain no-repeat;
-}
-
 .editingClosed {
   color: #ffcece;
   font-family: var(--font-cine);
@@ -2813,40 +2804,10 @@ button:focus-visible {
   flex-direction: column;
   justify-content: center;
   gap: clamp(12px, 2.2vh, 24px);
-  border: 0;
-  border-radius: 0;
+  border: 4px solid var(--white);
+  border-radius: clamp(28px, 4vw, 54px);
   padding: 24px clamp(24px, 6vw, 90px);
-  background: transparent;
-}
-
-.homeLogout {
-  position: absolute;
-  bottom: 22px;
-  left: 28px;
-  z-index: 12;
-  display: inline-flex;
-  align-items: center;
-  gap: 12px;
-  border: 0;
-  padding: 4px 8px 4px 0;
-  background: transparent;
-  color: var(--white);
-  cursor: pointer;
-  font-family: var(--font-cine);
-  font-size: var(--font-main);
-  line-height: 1;
-}
-
-.logoutDoorIcon {
-  width: 1.05em;
-  height: 1.05em;
-  flex: 0 0 auto;
-  background: currentColor;
-  clip-path: polygon(0 8%, 62% 8%, 62% 37%, 100% 37%, 100% 63%, 62% 63%, 62% 92%, 0 92%, 0 72%, 40% 72%, 40% 63%, 16% 63%, 16% 37%, 40% 37%, 40% 28%, 0 28%);
-}
-
-.homeLogout:hover {
-  transform: translateY(-2px);
+  background: #1d1d1d;
 }
 
 .loginCard h2 {
@@ -3026,8 +2987,8 @@ button:focus-visible {
 .scheduleDiscordIcon {
   display: block;
   background-color: var(--white);
-  -webkit-mask: url("/assets/discord-symbol-white.png") center / contain no-repeat;
-  mask: url("/assets/discord-symbol-white.png") center / contain no-repeat;
+  -webkit-mask: var(--discord-mask) center / contain no-repeat;
+  mask: var(--discord-mask) center / contain no-repeat;
 }
 
 .scheduleAvailabilityEntry.discordApproved .scheduleDiscordIcon {
@@ -4028,7 +3989,7 @@ button:focus-visible {
   left: 50%;
   width: min(48vw, 760px);
   aspect-ratio: 1;
-  background: url("/assets/mononoke-no-kagi.png") center / contain no-repeat;
+  background: var(--mononoke-logo) center / contain no-repeat;
   content: "";
   opacity: 0.075;
   transform: translate(-50%, -50%);
@@ -4392,5 +4353,92 @@ button:focus-visible {
 
   .availabilityHeaderRow > .availabilityLegend {
     width: 118px;
+  }
+}
+
+/* Portal sign-out actions and the unboxed classmate login form. */
+.loginCard {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.homeLogout {
+  position: absolute;
+  bottom: 22px;
+  left: 27px;
+  z-index: 20;
+  display: inline-flex;
+  min-height: 0;
+  align-items: center;
+  gap: 24px;
+  border: 0;
+  border-radius: 0;
+  padding: 4px 8px 4px 0;
+  background: transparent;
+  color: var(--white);
+  cursor: pointer;
+  font-size: var(--font-main);
+  line-height: 1;
+}
+
+.homeLogout svg {
+  width: 57px;
+  height: 44px;
+  flex: 0 0 57px;
+}
+
+.homeLogout:hover,
+.availabilityLogout:hover,
+.approvalDiscordLogout:hover {
+  transform: translateY(-2px);
+}
+
+.discordLogoutIcon {
+  display: block;
+  width: 57px;
+  height: 44px;
+  flex: 0 0 57px;
+  background-color: #5865f2;
+  -webkit-mask: var(--discord-mask) center / contain no-repeat;
+  mask: var(--discord-mask) center / contain no-repeat;
+}
+
+.approvalDiscordLogout {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+@media (max-width: 680px) {
+  .homeLogout,
+  .availabilityLogout {
+    bottom: 18px;
+    left: 16px;
+    width: 48px;
+    min-width: 48px;
+    height: 40px;
+    min-height: 40px;
+    justify-content: center;
+    gap: 0;
+    padding: 0;
+  }
+
+  .homeLogout > span,
+  .availabilityLogout > span:last-child {
+    position: absolute;
+    bottom: calc(100% + 6px);
+    left: 0;
+    font-size: 13px;
+    line-height: 1;
+    white-space: nowrap;
+  }
+
+  .homeLogout svg,
+  .availabilityLogout .discordLogoutIcon {
+    width: 45px;
+    height: 35px;
+    flex-basis: 45px;
   }
 }

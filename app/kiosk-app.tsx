@@ -1,10 +1,13 @@
 "use client";
 
 import Image from "next/image";
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { LogOut } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { ClassroomViewer } from "./classroom-viewer";
 import { ScheduleScreen } from "./schedule-screen";
+
+const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 
 type Screen = "home" | "schedule" | "video" | "map";
 
@@ -29,15 +32,6 @@ export function KioskApp({
   const [screen, setScreen] = useState<Screen>("home");
   const [portalAccess, setPortalAccess] = useState<"loading" | "classmate" | "discord" | "none">("loading");
   const [classmateToken, setClassmateToken] = useState("");
-
-  const signOutPortal = async () => {
-    window.localStorage.removeItem("mononoke-classmate-session");
-    window.sessionStorage.removeItem("mononoke-open-availability");
-    setClassmateToken("");
-    setScreen("home");
-    if (portalAccess === "discord" && client) await client.auth.signOut();
-    setPortalAccess("none");
-  };
 
   useEffect(() => {
     if (!client) {
@@ -94,6 +88,19 @@ export function KioskApp({
     }
   }, []);
 
+  const logoutPortal = async () => {
+    window.localStorage.removeItem("mononoke-classmate-session");
+    window.sessionStorage.removeItem("mononoke-open-availability");
+    setClassmateToken("");
+    setScreen("home");
+
+    if (client) {
+      await client.auth.signOut();
+    }
+
+    setPortalAccess("none");
+  };
+
   useEffect(() => {
     const returnHome = (event: KeyboardEvent) => {
       if (
@@ -126,7 +133,7 @@ export function KioskApp({
       )}
 
       {portalAccess !== "loading" && portalAccess !== "none" && screen === "home" && (
-        <HomeScreen onNavigate={setScreen} onSignOut={() => void signOutPortal()} />
+        <HomeScreen onNavigate={setScreen} onLogout={() => void logoutPortal()} />
       )}
 
       {portalAccess !== "loading" && portalAccess !== "none" && screen === "schedule" && (
@@ -168,7 +175,7 @@ function ClassmateLogin({
   client,
   onSuccess,
 }: {
-  client: ReturnType<typeof createClient>;
+  client: SupabaseClient<any, "public", any>;
   onSuccess: (token: string) => void;
 }) {
   const [studentId, setStudentId] = useState("");
@@ -223,10 +230,10 @@ function ClassmateLogin({
 
 function HomeScreen({
   onNavigate,
-  onSignOut,
+  onLogout,
 }: {
   onNavigate: (screen: Screen) => void;
-  onSignOut: () => void;
+  onLogout: () => void;
 }) {
   return (
     <section className="homeScreen" aria-label="ホーム">
@@ -258,8 +265,13 @@ function HomeScreen({
         </div>
       </nav>
 
-      <button type="button" className="homeLogout" onClick={onSignOut}>
-        <span className="logoutDoorIcon" aria-hidden="true" />
+      <button
+        type="button"
+        className="homeLogout"
+        onClick={onLogout}
+        aria-label="ログアウトしてIDとパスワードの入力画面に戻る"
+      >
+        <LogOut aria-hidden="true" />
         <span>ログアウト</span>
       </button>
     </section>
@@ -271,7 +283,7 @@ export function Brand({ className = "" }: { className?: string }) {
     <div className={`kioskBrand ${className}`}>
       <Image
         className="brandSymbol"
-        src="/assets/mononoke-no-kagi.png"
+        src={`${BASE_PATH}/assets/mononoke-no-kagi.png`}
         alt=""
         width={1024}
         height={1024}
@@ -289,7 +301,7 @@ function Watermark() {
   return (
     <Image
       className="watermark"
-      src="/assets/mononoke-no-kagi.png"
+      src={`${BASE_PATH}/assets/mononoke-no-kagi.png`}
       alt=""
       width={1024}
       height={1024}

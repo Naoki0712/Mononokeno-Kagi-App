@@ -205,7 +205,7 @@ export function ScheduleScreen({
     const { error } = await client.auth.signInWithOAuth({
       provider: "discord",
       options: {
-        redirectTo: `${window.location.origin}/`,
+        redirectTo: `${window.location.origin}${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/`,
       },
     });
 
@@ -673,7 +673,7 @@ function AvailabilityCalendar({
         onClick={() => void onSignOut()}
       >
         <span className="discordLogoutIcon" aria-hidden="true" />
-        ログアウト
+        <span>ログアウト</span>
       </button>
     </section>
   );
@@ -695,7 +695,14 @@ function ApprovalWaiting({
         <UserCheck aria-hidden="true" />
         <h2>{rejected ? "利用が承認されていません" : "管理者の承認を待っています"}</h2>
         <p>{rejected ? "必要な場合は運営担当者に確認してください。" : "承認後、もう一度この画面を開くと空き日程を入力できます。"}</p>
-        <button type="button" onClick={() => void onSignOut()}>ログアウト</button>
+        <button
+          type="button"
+          className="approvalDiscordLogout"
+          onClick={() => void onSignOut()}
+        >
+          <span className="discordLogoutIcon" aria-hidden="true" />
+          <span>ログアウト</span>
+        </button>
       </div>
     </section>
   );
