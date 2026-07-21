@@ -119,10 +119,9 @@ export function ScheduleScreen({
     let active = true;
     const loadMember = async () => {
       const existing = await client
-        .from("member_schedule")
-        .select("user_id,display_name,discord_id,status")
+        .from("member_approvals")
+        .select("user_id,display_name,discord_id,status:approval_status")
         .eq("user_id", session.user.id)
-        .is("available_date", null)
         .maybeSingle();
 
       if (existing.data) {
@@ -131,17 +130,16 @@ export function ScheduleScreen({
       }
 
       const metadata = session.user.user_metadata;
-      await client.from("member_schedule").insert({
+      await client.from("member_approvals").insert({
         user_id: session.user.id,
         display_name: metadata.full_name ?? metadata.name ?? metadata.preferred_username ?? "Discordユーザー",
         discord_id: metadata.provider_id ?? null,
-        status: "pending",
+        approval_status: "pending",
       });
       const requested = await client
-        .from("member_schedule")
-        .select("user_id,display_name,discord_id,status")
+        .from("member_approvals")
+        .select("user_id,display_name,discord_id,status:approval_status")
         .eq("user_id", session.user.id)
-        .is("available_date", null)
         .maybeSingle();
       if (active) setMember((requested.data as PortalMember | null) ?? null);
     };
@@ -248,11 +246,22 @@ export function ScheduleScreen({
     );
   }
 
+  if (classmateToken && view === "availability") {
+    return (
+      <AvailabilityCalendar
+        client={client}
+        classmateToken={classmateToken}
+        onBack={() => setView("schedule")}
+        editingEnabled
+      />
+    );
+  }
+
   if (!session) {
     return (
       <SchedulePortal
         onBack={onBack}
-        onAvailability={() => void signInWithDiscord()}
+        onAvailability={classmateToken ? () => setView("availability") : () => void signInWithDiscord()}
         onManuals={() => setView("manuals")}
         showDiscordAction
         events={scheduleEvents}
@@ -512,14 +521,16 @@ function ManualList({ onBack }: { onBack: () => void }) {
 function AvailabilityCalendar({
   client,
   session,
+  classmateToken = "",
   onBack,
   onSignOut,
   editingEnabled,
 }: {
   client: SupabaseClient;
-  session: Session;
+  session?: Session;
+  classmateToken?: string;
   onBack: () => void;
-  onSignOut: () => Promise<unknown>;
+  onSignOut?: () => Promise<unknown>;
   editingEnabled: boolean;
 }) {
   const [availability, setAvailability] = useState<Record<string, AvailabilityStatus>>({});
@@ -532,12 +543,15 @@ function AvailabilityCalendar({
   const loadAvailability = useCallback(async () => {
     setLoading(true);
     setDataError("");
-    const { data, error } = await client
-      .from("member_schedule")
-      .select("available_date,status")
-      .eq("user_id", session.user.id)
-      .gte("available_date", AVAILABILITY_MONTH_START)
-      .lte("available_date", AVAILABILITY_MONTH_END);
+    const result = classmateToken
+      ? await client.rpc("classmate_availability", { p_token: classmateToken })
+      : await client
+          .from("member_availability")
+          .select("available_date,status:availability_status")
+          .eq("user_id", session!.user.id)
+          .gte("available_date", AVAILABILITY_MONTH_START)
+          .lte("available_date", AVAILABILITY_MONTH_END);
+    const { data, error } = result;
 
     if (error) {
       setDataError("回答を読み込めませんでした。もう一度お試しください。");
@@ -549,7 +563,7 @@ function AvailabilityCalendar({
       setAvailability(next);
     }
     setLoading(false);
-  }, [client, session.user.id]);
+  }, [classmateToken, client, session]);
 
   useEffect(() => {
     const initialLoad = window.setTimeout(() => void loadAvailability(), 0);
@@ -575,20 +589,26 @@ function AvailabilityCalendar({
     setSavingDate(dateKey);
     setDataError("");
 
-    const result = next
-      ? await client.from("member_schedule").upsert(
-          {
-            user_id: session.user.id,
-            available_date: dateKey,
-            status: next,
-          },
-          { onConflict: "user_id,available_date" },
-        )
-      : await client
-          .from("member_schedule")
-          .delete()
-          .eq("user_id", session.user.id)
-          .eq("available_date", dateKey);
+    const result = classmateToken
+      ? await client.rpc("set_classmate_availability", {
+          p_token: classmateToken,
+          p_date: dateKey,
+          p_status: next ?? null,
+        })
+      : next
+        ? await client.from("member_availability").upsert(
+            {
+              user_id: session!.user.id,
+              available_date: dateKey,
+              availability_status: next,
+            },
+            { onConflict: "user_id,available_date" },
+          )
+        : await client
+            .from("member_availability")
+            .delete()
+            .eq("user_id", session!.user.id)
+            .eq("available_date", dateKey);
 
     if (result.error) {
       setAvailability((current) => {
@@ -667,14 +687,16 @@ function AvailabilityCalendar({
         </div>
       </div>
 
-      <button
-        type="button"
-        className="availabilityLogout"
-        onClick={() => void onSignOut()}
-      >
-        <span className="discordLogoutIcon" aria-hidden="true" />
-        <span>ログアウト</span>
-      </button>
+      {onSignOut && (
+        <button
+          type="button"
+          className="availabilityLogout"
+          onClick={() => void onSignOut()}
+        >
+          <span className="discordLogoutIcon" aria-hidden="true" />
+          <span>ログアウト</span>
+        </button>
+      )}
     </section>
   );
 }
