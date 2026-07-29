@@ -3,8 +3,19 @@ begin;
 create schema if not exists private;
 
 -- Stop the legacy two-way mirrors before making the public tables canonical.
-drop trigger if exists mirror_member_schedule_to_public on private.member_schedule;
-drop trigger if exists mirror_class_schedule_to_public on private.class_schedule;
+-- DROP TRIGGER ... IF EXISTS still errors when the relation itself is absent,
+-- so guard legacy relations explicitly for production-cloned preview branches.
+do $$
+begin
+  if to_regclass('private.member_schedule') is not null then
+    execute 'drop trigger if exists mirror_member_schedule_to_public on private.member_schedule';
+  end if;
+
+  if to_regclass('private.class_schedule') is not null then
+    execute 'drop trigger if exists mirror_class_schedule_to_public on private.class_schedule';
+  end if;
+end;
+$$;
 drop function if exists private.mirror_member_schedule_to_public();
 drop function if exists private.mirror_class_schedule_to_public();
 
@@ -670,15 +681,23 @@ $$;
 revoke all on function private.sync_classmate_account_to_public() from public, anon, authenticated;
 revoke all on function private.sync_member_password_to_public() from public, anon, authenticated;
 
-drop trigger if exists sync_classmate_account_to_public on private.class_schedule;
-create trigger sync_classmate_account_to_public
-after insert or update or delete on private.class_schedule
-for each row execute function private.sync_classmate_account_to_public();
+do $$
+begin
+  if to_regclass('private.class_schedule') is not null then
+    execute 'drop trigger if exists sync_classmate_account_to_public on private.class_schedule';
+    execute 'create trigger sync_classmate_account_to_public
+      after insert or update or delete on private.class_schedule
+      for each row execute function private.sync_classmate_account_to_public()';
+  end if;
 
-drop trigger if exists sync_member_password_to_public on private.member_schedule;
-create trigger sync_member_password_to_public
-after update of password on private.member_schedule
-for each row execute function private.sync_member_password_to_public();
+  if to_regclass('private.member_schedule') is not null then
+    execute 'drop trigger if exists sync_member_password_to_public on private.member_schedule';
+    execute 'create trigger sync_member_password_to_public
+      after update of password on private.member_schedule
+      for each row execute function private.sync_member_password_to_public()';
+  end if;
+end;
+$$;
 
 -- Refuse to remove the legacy tables unless every row was copied successfully.
 do $$
