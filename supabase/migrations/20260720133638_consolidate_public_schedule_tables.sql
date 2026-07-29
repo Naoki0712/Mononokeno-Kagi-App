@@ -3,19 +3,23 @@ begin;
 create schema if not exists private;
 
 -- Stop the legacy two-way mirrors before making the public tables canonical.
--- DROP TRIGGER ... IF EXISTS still errors when the relation itself is absent,
--- so guard legacy relations explicitly for production-cloned preview branches.
-do $$
+-- Preview branches can inherit migration history without the legacy relations,
+-- so catch undefined_table explicitly around each legacy-only operation.
+do $
 begin
-  if to_regclass('private.member_schedule') is not null then
+  begin
     execute 'drop trigger if exists mirror_member_schedule_to_public on private.member_schedule';
-  end if;
+  exception
+    when undefined_table then null;
+  end;
 
-  if to_regclass('private.class_schedule') is not null then
+  begin
     execute 'drop trigger if exists mirror_class_schedule_to_public on private.class_schedule';
-  end if;
+  exception
+    when undefined_table then null;
+  end;
 end;
-$$;
+$;
 drop function if exists private.mirror_member_schedule_to_public();
 drop function if exists private.mirror_class_schedule_to_public();
 
