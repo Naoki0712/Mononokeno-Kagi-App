@@ -5,7 +5,7 @@ create schema if not exists private;
 -- Stop the legacy two-way mirrors before making the public tables canonical.
 -- Preview branches can inherit migration history without the legacy relations,
 -- so catch undefined_table explicitly around each legacy-only operation.
-do $
+do $migration$
 begin
   begin
     execute 'drop trigger if exists mirror_member_schedule_to_public on private.member_schedule';
@@ -19,7 +19,7 @@ begin
     when undefined_table then null;
   end;
 end;
-$;
+$migration$;
 drop function if exists private.mirror_member_schedule_to_public();
 drop function if exists private.mirror_class_schedule_to_public();
 
