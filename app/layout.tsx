@@ -24,11 +24,7 @@ export default function RootLayout({
   return (
     <html
       lang="ja"
-      style={{
-        "--cinecaption-font": `url("${basePath}/fonts/cinecaption227.TTF")`,
-        "--discord-mask": `url("${basePath}/assets/discord-symbol-white.png")`,
-        "--mononoke-logo": `url("${basePath}/assets/mononoke-no-kagi.png")`,
-      } as CSSProperties}
+      style={{ "--mononoke-logo": `url("${basePath}/assets/mononoke-no-kagi.png")` } as CSSProperties}
     >
       <body>{children}</body>
     </html>

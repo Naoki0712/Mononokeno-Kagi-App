@@ -4,7 +4,6 @@ import Image from "next/image";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { LogOut } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { ClassroomViewer } from "./classroom-viewer";
 import { ScheduleScreen } from "./schedule-screen";
 
 const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
@@ -30,7 +29,7 @@ export function KioskApp({
     [supabasePublishableKey, supabaseUrl],
   );
   const [screen, setScreen] = useState<Screen>("home");
-  const [portalAccess, setPortalAccess] = useState<"loading" | "classmate" | "discord" | "none">("loading");
+  const [portalAccess, setPortalAccess] = useState<"loading" | "classmate" | "none">("loading");
   const [classmateToken, setClassmateToken] = useState("");
 
   useEffect(() => {
@@ -63,41 +62,16 @@ export function KioskApp({
       }
     };
 
-    void client.auth.getSession().then(({ data }) => {
-      if (!active) return;
-      if (data.session) setPortalAccess("discord");
-      else void restoreClassmate();
-    });
-
-    const { data: listener } = client.auth.onAuthStateChange((_event, session) => {
-      if (!active) return;
-      if (session) setPortalAccess("discord");
-      else void restoreClassmate();
-    });
+    void restoreClassmate();
     return () => {
       active = false;
-      listener.subscription.unsubscribe();
     };
   }, [client]);
 
-  useEffect(() => {
-    if (window.sessionStorage.getItem("mononoke-open-availability") === "1") {
-      window.sessionStorage.removeItem("mononoke-open-availability");
-      const openSchedule = window.setTimeout(() => setScreen("schedule"), 0);
-      return () => window.clearTimeout(openSchedule);
-    }
-  }, []);
-
   const logoutPortal = async () => {
     window.localStorage.removeItem("mononoke-classmate-session");
-    window.sessionStorage.removeItem("mononoke-open-availability");
     setClassmateToken("");
     setScreen("home");
-
-    if (client) {
-      await client.auth.signOut();
-    }
-
     setPortalAccess("none");
   };
 
@@ -162,9 +136,6 @@ export function KioskApp({
             title="マップを開く"
             onBack={() => setScreen("home")}
           />
-          <div className="mapEmbed">
-            <ClassroomViewer minimal />
-          </div>
         </section>
       )}
     </main>
@@ -175,7 +146,7 @@ function ClassmateLogin({
   client,
   onSuccess,
 }: {
-  client: SupabaseClient<any, "public", any>;
+  client: SupabaseClient;
   onSuccess: (token: string) => void;
 }) {
   const [studentId, setStudentId] = useState("");

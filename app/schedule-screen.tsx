@@ -1,7 +1,7 @@
 "use client";
 
-import { createClient, type Session, type SupabaseClient } from "@supabase/supabase-js";
-import { LoaderCircle, NotebookPen, UserCheck } from "lucide-react";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { CalendarDays, List, LoaderCircle, NotebookPen, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 type ScheduleScreenProps = {
@@ -18,32 +18,20 @@ type AvailabilityRow = {
   status: AvailabilityStatus;
 };
 
-type PortalMember = {
-  user_id: string;
-  display_name: string;
-  discord_id: string | null;
-  status: "pending" | "approved" | "rejected";
+type MemberScheduleRow = {
+  id: string;
+  available_date: string;
+  status: AvailabilityStatus;
+  group_name: GroupName | null;
+  is_self: boolean;
 };
 
-type ScheduleEvent = {
-  id: string;
-  title: string;
-  event_date: string;
-  start_time: string | null;
-  end_time: string | null;
-  assignee: string;
-  team: string;
-  location: string;
-  description: string;
-};
+type GroupName = "Class-leader" | "Layout" | "Gimmick" | "Decoration" | "Gadget" | "Story";
 
 const WEEKDAYS = ["日", "月", "火", "水", "木", "金", "土"];
 const AVAILABILITY_MONTH = new Date(2026, 7, 1);
-const AVAILABILITY_MONTH_START = "2026-08-01";
-const AVAILABILITY_MONTH_END = "2026-08-31";
 const AVAILABILITY_CLOSED_START = "2026-08-10";
 const AVAILABILITY_CLOSED_END = "2026-08-17";
-const SCHEDULE_FIELDS = "id,title,event_date:available_date,start_time:available_time,end_time,assignee,team,location,description";
 const MANUALS = [
   "🟢レイアウト班",
   "🔵ギミック班",
@@ -72,82 +60,10 @@ export function ScheduleScreen({
     });
   }, [supabasePublishableKey, supabaseUrl]);
 
-  const [session, setSession] = useState<Session | null | undefined>(() =>
-    client ? undefined : null,
-  );
-  const [authError, setAuthError] = useState("");
-  const [signingIn, setSigningIn] = useState(false);
-  const [member, setMember] = useState<PortalMember | null | undefined>();
-  const [view, setView] = useState<"schedule" | "availability" | "manuals">("schedule");
-  const [scheduleEvents, setScheduleEvents] = useState<ScheduleEvent[]>([]);
+  const [view, setView] = useState<"schedule" | "details" | "availability" | "manuals">("schedule");
+  const [memberSchedules, setMemberSchedules] = useState<MemberScheduleRow[]>([]);
   const [scheduleLoading, setScheduleLoading] = useState(true);
   const [scheduleError, setScheduleError] = useState("");
-
-  useEffect(() => {
-    if (!client) return;
-
-    let active = true;
-    void client.auth.getSession().then(async ({ data, error }) => {
-      if (!active) return;
-      if (error) setAuthError("ログイン状態を確認できませんでした。");
-      if (data.session) {
-        const refreshed = await client.auth.refreshSession();
-        if (active) setSession(refreshed.data.session ?? data.session);
-      } else {
-        setSession(null);
-      }
-    });
-
-    const {
-      data: { subscription },
-    } = client.auth.onAuthStateChange((_event, nextSession) => {
-      if (active) setSession(nextSession);
-    });
-
-    return () => {
-      active = false;
-      subscription.unsubscribe();
-    };
-  }, [client]);
-
-  useEffect(() => {
-    if (!client || !session) {
-      const clearMember = window.setTimeout(() => setMember(null), 0);
-      return () => window.clearTimeout(clearMember);
-    }
-
-    let active = true;
-    const loadMember = async () => {
-      const existing = await client
-        .from("member_approvals")
-        .select("user_id,display_name,discord_id,status:approval_status")
-        .eq("user_id", session.user.id)
-        .maybeSingle();
-
-      if (existing.data) {
-        if (active) setMember(existing.data as PortalMember);
-        return;
-      }
-
-      const metadata = session.user.user_metadata;
-      await client.from("member_approvals").insert({
-        user_id: session.user.id,
-        display_name: metadata.full_name ?? metadata.name ?? metadata.preferred_username ?? "Discordユーザー",
-        discord_id: metadata.provider_id ?? null,
-        approval_status: "pending",
-      });
-      const requested = await client
-        .from("member_approvals")
-        .select("user_id,display_name,discord_id,status:approval_status")
-        .eq("user_id", session.user.id)
-        .maybeSingle();
-      if (active) setMember((requested.data as PortalMember | null) ?? null);
-    };
-    void loadMember();
-    return () => {
-      active = false;
-    };
-  }, [client, session]);
 
   useEffect(() => {
     if (!client) {
@@ -155,8 +71,7 @@ export function ScheduleScreen({
       return () => window.clearTimeout(unavailable);
     }
 
-    const canUseDiscord = Boolean(session && member?.status === "approved");
-    if (!classmateToken && !canUseDiscord) {
+    if (!classmateToken) {
       const unavailable = window.setTimeout(() => setScheduleLoading(false), 0);
       return () => window.clearTimeout(unavailable);
     }
@@ -168,20 +83,13 @@ export function ScheduleScreen({
         setScheduleError("");
       }
 
-      const result = canUseDiscord
-        ? await client
-            .from("class_schedule")
-            .select(SCHEDULE_FIELDS)
-            .not("title", "is", null)
-            .order("available_date", { ascending: true })
-            .order("available_time", { ascending: true, nullsFirst: false })
-        : await client.rpc("classmate_schedule", { p_token: classmateToken });
+      const result = await client.rpc("classmate_member_calendar", { p_token: classmateToken });
 
       if (!active) return;
       if (result.error) {
         setScheduleError("スケジュールを読み込めませんでした。");
       } else {
-        setScheduleEvents((result.data ?? []) as ScheduleEvent[]);
+        setMemberSchedules((result.data ?? []) as MemberScheduleRow[]);
       }
       setScheduleLoading(false);
     };
@@ -192,27 +100,7 @@ export function ScheduleScreen({
       active = false;
       window.clearInterval(refresh);
     };
-  }, [classmateToken, client, member?.status, session]);
-
-  const signInWithDiscord = async () => {
-    if (!client) return;
-    setSigningIn(true);
-    setAuthError("");
-    window.sessionStorage.setItem("mononoke-open-availability", "1");
-
-    const { error } = await client.auth.signInWithOAuth({
-      provider: "discord",
-      options: {
-        redirectTo: `${window.location.origin}${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/`,
-      },
-    });
-
-    if (error) {
-      window.sessionStorage.removeItem("mononoke-open-availability");
-      setSigningIn(false);
-      setAuthError("Discordログインを開始できませんでした。設定を確認してください。");
-    }
-  };
+  }, [classmateToken, client]);
 
   if (view === "manuals") {
     return <ManualList onBack={() => setView("schedule")} />;
@@ -223,8 +111,8 @@ export function ScheduleScreen({
       <SchedulePortal
         onBack={onBack}
         onManuals={() => setView("manuals")}
-        showDiscordAction={false}
-        events={scheduleEvents}
+        calendarMode="month"
+        rows={memberSchedules}
         loading={scheduleLoading}
         scheduleError={scheduleError}
         authError="Supabaseの接続設定を読み込めませんでした。"
@@ -232,73 +120,17 @@ export function ScheduleScreen({
     );
   }
 
-  if (session === undefined) {
+  if (view === "details") {
     return (
       <SchedulePortal
         onBack={onBack}
+        onAction={() => setView("schedule")}
         onManuals={() => setView("manuals")}
-        showDiscordAction
-        events={scheduleEvents}
+        actionLabel="月全体の予定"
+        calendarMode="details"
+        rows={memberSchedules}
         loading={scheduleLoading}
         scheduleError={scheduleError}
-        discordBusy
-      />
-    );
-  }
-
-  if (classmateToken && view === "availability") {
-    return (
-      <AvailabilityCalendar
-        client={client}
-        classmateToken={classmateToken}
-        onBack={() => setView("schedule")}
-        editingEnabled
-      />
-    );
-  }
-
-  if (!session) {
-    return (
-      <SchedulePortal
-        onBack={onBack}
-        onAvailability={classmateToken ? () => setView("availability") : () => void signInWithDiscord()}
-        onManuals={() => setView("manuals")}
-        showDiscordAction
-        events={scheduleEvents}
-        loading={scheduleLoading}
-        scheduleError={scheduleError}
-        discordBusy={signingIn}
-        authError={authError}
-      />
-    );
-  }
-
-  if (member === undefined) {
-    return (
-      <SchedulePortal
-        onBack={onBack}
-        onManuals={() => setView("manuals")}
-        showDiscordAction
-        events={scheduleEvents}
-        loading={scheduleLoading}
-        scheduleError={scheduleError}
-        discordBusy
-      />
-    );
-  }
-
-  if (!member || member.status !== "approved") {
-    return <ApprovalWaiting onBack={onBack} rejected={member?.status === "rejected"} onSignOut={() => client.auth.signOut()} />;
-  }
-
-  if (view === "availability") {
-    return (
-      <AvailabilityCalendar
-        client={client}
-        session={session}
-        onBack={() => setView("schedule")}
-        onSignOut={() => client.auth.signOut()}
-        editingEnabled
       />
     );
   }
@@ -306,13 +138,13 @@ export function ScheduleScreen({
   return (
     <SchedulePortal
       onBack={onBack}
-      onAvailability={() => setView("availability")}
+      onAction={() => setView("details")}
       onManuals={() => setView("manuals")}
-      showDiscordAction
-      events={scheduleEvents}
+      actionLabel="詳細の予定"
+      calendarMode="month"
+      rows={memberSchedules}
       loading={scheduleLoading}
       scheduleError={scheduleError}
-      discordApproved
     />
   );
 }
@@ -336,51 +168,55 @@ function SimpleSchedulePage({
 
 function SchedulePortal({
   onBack,
+  onAction,
   onAvailability,
   onManuals,
-  showDiscordAction,
-  events,
+  actionLabel,
+  calendarMode = "month",
+  rows,
   loading,
   scheduleError,
-  discordApproved = false,
-  discordBusy = false,
   authError = "",
+  title = "スケジュールを確認する",
 }: {
   onBack: () => void;
+  onAction?: () => void;
   onAvailability?: () => void;
   onManuals: () => void;
-  showDiscordAction: boolean;
-  events: ScheduleEvent[];
+  actionLabel?: string;
+  calendarMode?: "month" | "details";
+  rows: MemberScheduleRow[];
   loading: boolean;
   scheduleError: string;
-  discordApproved?: boolean;
-  discordBusy?: boolean;
   authError?: string;
+  title?: string;
 }) {
+  const cornerAction = onAction ?? onAvailability;
   return (
-    <SimpleSchedulePage onBack={onBack} title="スケジュールを確認する">
+    <SimpleSchedulePage onBack={onBack} title={title}>
       <div
         className="scheduleCarouselViewport scheduleSlide-timeline"
         aria-live="polite"
         aria-label="日程"
       >
-        <ScheduleTimeline events={events} loading={loading} error={scheduleError} />
+        <MemberScheduleCalendar
+          rows={rows}
+          loading={loading}
+          error={scheduleError}
+          mode={calendarMode}
+          onDateClick={calendarMode === "month" ? onAction : undefined}
+        />
       </div>
 
-      {showDiscordAction && (
+      {cornerAction && actionLabel && (
         <button
           type="button"
-          className={`scheduleAvailabilityEntry ${discordApproved ? "discordApproved" : ""}`}
-          onClick={onAvailability}
-          disabled={discordBusy || !onAvailability}
-          aria-label="Discordでログインして空き日程を選択"
+          className="scheduleAvailabilityEntry"
+          onClick={cornerAction}
+          aria-label={actionLabel}
         >
-          {discordBusy ? (
-            <LoaderCircle className="spinIcon" aria-hidden="true" />
-          ) : (
-            <span className="scheduleDiscordIcon" aria-hidden="true" />
-          )}
-          <span>{discordBusy ? "確認中" : "空き日程の選択"}</span>
+          {calendarMode === "month" ? <List aria-hidden="true" /> : <CalendarDays aria-hidden="true" />}
+          <span>{actionLabel}</span>
         </button>
       )}
       <button type="button" className="scheduleManualEntry" onClick={onManuals}>
@@ -392,105 +228,112 @@ function SchedulePortal({
   );
 }
 
-function ScheduleTimeline({
-  events,
+function MemberScheduleCalendar({
+  rows,
   loading,
   error,
+  mode,
+  onDateClick,
 }: {
-  events: ScheduleEvent[];
+  rows: MemberScheduleRow[];
   loading: boolean;
   error: string;
+  mode: "month" | "details";
+  onDateClick?: () => void;
 }) {
-  const [now, setNow] = useState(() => new Date());
-  const dateKeys = useMemo(
-    () => Array.from(new Set(events.map((event) => event.event_date))).sort(),
-    [events],
-  );
-  const [requestedDate, setRequestedDate] = useState("");
-  const selectedDate = dateKeys.includes(requestedDate)
-    ? requestedDate
-    : defaultScheduleDate(dateKeys, now);
+  const calendarDays = useMemo(() => getCalendarDays(AVAILABILITY_MONTH), []);
+  const [dialog, setDialog] = useState<{ group: GroupName | null; ids: string[] } | null>(null);
+  const selfRows = rows.filter((row) => row.is_self && row.status === "available");
+  const selfDates = [...new Set(selfRows.map((row) => row.available_date))].sort();
 
   useEffect(() => {
-    const timer = window.setInterval(() => setNow(new Date()), 30_000);
-    return () => window.clearInterval(timer);
-  }, []);
+    if (mode !== "details") return;
+    const date = window.sessionStorage.getItem("mononoke-selected-schedule-date");
+    if (!date) return;
+    window.setTimeout(() => document.getElementById(`schedule-day-${date}`)?.scrollIntoView({ block: "start" }), 0);
+  }, [mode]);
 
   if (loading) return <ScheduleState icon="loading" message="スケジュールを読み込み中" />;
   if (error) return <ScheduleState message={error} />;
-  if (!events.length) return <ScheduleState message="予定はまだ登録されていません" />;
-
-  const dayEvents = events.filter((event) => event.event_date === selectedDate);
-  const slots = Array.from(
-    new Map(dayEvents.map((event) => [scheduleSlotKey(event), event])).values(),
-  ).sort(compareScheduleEvents);
-  const rows = Array.from(new Set(dayEvents.map(scheduleRowLabel)));
-  const activeIds = new Set(
-    events.filter((event) => isEventActive(event, now)).map((event) => event.id),
-  );
-  const nextEvent = events
-    .filter((event) => eventStart(event).getTime() > now.getTime())
-    .sort(compareScheduleEvents)[0];
-  const focusEvent = events.find((event) => activeIds.has(event.id)) ?? nextEvent;
 
   return (
-    <div className="scheduleTimelinePanel">
-      <label className="scheduleDayPicker">
-        <span className="srOnly">表示する日</span>
-        <select value={selectedDate} onChange={(event) => setRequestedDate(event.target.value)}>
-          {dateKeys.map((date, index) => (
-            <option value={date} key={date}>{index + 1}日目（{formatJapaneseDate(date)}）</option>
-          ))}
-        </select>
-      </label>
-
-      {focusEvent && (
-        <div className="scheduleCurrentRole">
-          <span>{activeIds.has(focusEvent.id) ? `${formatTime(focusEvent.end_time) || "終了"}まで` : `${formatTime(focusEvent.start_time) || formatJapaneseDate(focusEvent.event_date)}から`}</span>
-          <strong>{focusEvent.title}</strong>
+    <div className={`memberCalendarLayout memberCalendar-${mode}`}>
+      {mode === "month" && <div className="memberMonthPanel">
+        <div className="memberMonthHeading">
+          <CalendarDays aria-hidden="true" />
+          <strong>2026年8月</strong>
+          <span>●は自分が参加する日です</span>
         </div>
-      )}
-
-      <div className="liveScheduleTableWrap">
-        <div
-          className="liveScheduleTable"
-          style={{ gridTemplateColumns: `minmax(150px, 1.1fr) repeat(${Math.max(slots.length, 1)}, minmax(130px, 1fr))` }}
-          role="table"
-          aria-label={`${formatJapaneseDate(selectedDate)}のスケジュール`}
-        >
-          <div className="liveScheduleCorner" role="columnheader" />
-          {slots.map((slot) => (
-            <div className="liveScheduleTime" role="columnheader" key={scheduleSlotKey(slot)}>
-              {formatTimeRange(slot)}
-            </div>
-          ))}
-          {rows.map((row) => (
-            <div className="liveScheduleRow" role="row" key={row}>
-              <div className="liveScheduleLabel" role="rowheader">{row}</div>
-              {slots.map((slot) => {
-                const cellEvents = dayEvents.filter(
-                  (event) => scheduleRowLabel(event) === row && scheduleSlotKey(event) === scheduleSlotKey(slot),
-                );
-                const isNow = cellEvents.some((event) => activeIds.has(event.id));
-                const isNext = Boolean(nextEvent && cellEvents.some((event) => event.id === nextEvent.id));
-                const state = isNow ? "now" : isNext ? "next" : cellEvents.length ? "scheduled" : "empty";
-                return (
-                  <div
-                    className={`liveScheduleCell ${state}`}
-                    role="cell"
-                    key={`${row}-${scheduleSlotKey(slot)}`}
-                    title={cellEvents.map(scheduleEventSummary).join(" / ")}
-                  >
-                    {isNow ? "NOW" : isNext ? "Next" : ""}
-                  </div>
-                );
-              })}
-            </div>
-          ))}
+        <div className="memberWeekdays">
+          {WEEKDAYS.map((day) => <span key={day}>{day}</span>)}
         </div>
-      </div>
+        <div className="memberMonthGrid">
+          {calendarDays.map((day) => {
+            const dateKey = toDateKey(day);
+            const inMonth = day.getMonth() === 7;
+            const selfSchedule = selfRows.find((row) => row.available_date === dateKey);
+            return (
+              <button
+                type="button"
+                key={dateKey}
+                className={`memberMonthDay ${inMonth ? "" : "outside"} ${selfSchedule ? "hasSchedule" : ""}`}
+                onClick={() => {
+                  if (!selfSchedule) return;
+                  window.sessionStorage.setItem("mononoke-selected-schedule-date", dateKey);
+                  onDateClick?.();
+                }}
+                disabled={!inMonth || !selfSchedule}
+              >
+                <span>{day.getDate()}</span>
+                {selfSchedule && (
+                  <i className="selfScheduleDot" style={{ "--group-color": groupColor(selfSchedule.group_name) } as React.CSSProperties} />
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </div>}
+
+      {mode === "details" && <div className="memberDetailsList">
+        {selfDates.map((date) => (
+          <article className="memberDetailDay" id={`schedule-day-${date}`} key={date}>
+            <p>{formatJapaneseDateWithWeekday(date)} 13:30〜14:30</p>
+            <div className="memberDetailGroups">
+              {groupRows(rows.filter((row) => row.available_date === date && row.status === "available")).map(({ group, ids, isSelf }) => (
+                <button type="button" className={`memberDetailGroup ${isSelf ? "self" : ""}`}
+                  style={{ "--group-color": groupColor(group) } as React.CSSProperties}
+                  onClick={() => setDialog({ group, ids })} key={group ?? "unset"}>
+                  <i aria-hidden="true" /><span>{groupLabel(group)}</span>
+                </button>
+              ))}
+            </div>
+          </article>
+        ))}
+        {!selfDates.length && <p className="memberNoSchedule">参加する予定はまだありません</p>}
+      </div>}
+      {dialog && <div className="groupDialogBackdrop" role="presentation" onClick={() => setDialog(null)}>
+        <section className="groupDialog" role="dialog" aria-modal="true" aria-labelledby="group-dialog-title" onClick={(event) => event.stopPropagation()}>
+          <button type="button" className="groupDialogClose" onClick={() => setDialog(null)} aria-label="閉じる"><X aria-hidden="true" /></button>
+          <h2 id="group-dialog-title">{groupLabel(dialog.group)}</h2>
+          <p>参加できる人のID</p>
+          <div className="groupDialogIds">{dialog.ids.map((id) => <strong key={id}>{id}</strong>)}</div>
+        </section>
+      </div>}
     </div>
   );
+}
+
+function groupRows(rows: MemberScheduleRow[]) {
+  const grouped = new Map<GroupName | null, { ids: string[]; isSelf: boolean }>();
+  rows.forEach((row) => {
+    const current = grouped.get(row.group_name) ?? { ids: [], isSelf: false };
+    if (!current.ids.includes(row.id)) current.ids.push(row.id);
+    current.isSelf ||= row.is_self;
+    grouped.set(row.group_name, current);
+  });
+  return [...grouped.entries()]
+    .map(([group, value]) => ({ group, ids: value.ids.sort(), isSelf: value.isSelf }))
+    .sort((a, b) => groupOrder(a.group) - groupOrder(b.group));
 }
 
 function ScheduleState({ message, icon }: { message: string; icon?: "loading" }) {
@@ -518,19 +361,17 @@ function ManualList({ onBack }: { onBack: () => void }) {
   );
 }
 
+// Kept as a hidden maintenance view so the stored availability data and editing logic remain intact.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function AvailabilityCalendar({
   client,
-  session,
   classmateToken = "",
   onBack,
-  onSignOut,
   editingEnabled,
 }: {
   client: SupabaseClient;
-  session?: Session;
   classmateToken?: string;
   onBack: () => void;
-  onSignOut?: () => Promise<unknown>;
   editingEnabled: boolean;
 }) {
   const [availability, setAvailability] = useState<Record<string, AvailabilityStatus>>({});
@@ -545,12 +386,7 @@ function AvailabilityCalendar({
     setDataError("");
     const result = classmateToken
       ? await client.rpc("classmate_availability", { p_token: classmateToken })
-      : await client
-          .from("member_availability")
-          .select("available_date,status:availability_status")
-          .eq("user_id", session!.user.id)
-          .gte("available_date", AVAILABILITY_MONTH_START)
-          .lte("available_date", AVAILABILITY_MONTH_END);
+      : { data: [], error: new Error("IDログイン情報がありません") };
     const { data, error } = result;
 
     if (error) {
@@ -563,7 +399,7 @@ function AvailabilityCalendar({
       setAvailability(next);
     }
     setLoading(false);
-  }, [classmateToken, client, session]);
+  }, [classmateToken, client]);
 
   useEffect(() => {
     const initialLoad = window.setTimeout(() => void loadAvailability(), 0);
@@ -595,20 +431,7 @@ function AvailabilityCalendar({
           p_date: dateKey,
           p_status: next ?? null,
         })
-      : next
-        ? await client.from("member_availability").upsert(
-            {
-              user_id: session!.user.id,
-              available_date: dateKey,
-              availability_status: next,
-            },
-            { onConflict: "user_id,available_date" },
-          )
-        : await client
-            .from("member_availability")
-            .delete()
-            .eq("user_id", session!.user.id)
-            .eq("available_date", dateKey);
+      : { error: new Error("IDログイン情報がありません") };
 
     if (result.error) {
       setAvailability((current) => {
@@ -687,45 +510,6 @@ function AvailabilityCalendar({
         </div>
       </div>
 
-      {onSignOut && (
-        <button
-          type="button"
-          className="availabilityLogout"
-          onClick={() => void onSignOut()}
-        >
-          <span className="discordLogoutIcon" aria-hidden="true" />
-          <span>ログアウト</span>
-        </button>
-      )}
-    </section>
-  );
-}
-
-function ApprovalWaiting({
-  onBack,
-  rejected,
-  onSignOut,
-}: {
-  onBack: () => void;
-  rejected: boolean;
-  onSignOut: () => Promise<unknown>;
-}) {
-  return (
-    <section className="subScreen approvalWaitingScreen" aria-labelledby="approval-title">
-      <ScreenTitle id="approval-title" title="メンバー承認" onBack={onBack} />
-      <div className="approvalWaitingCard">
-        <UserCheck aria-hidden="true" />
-        <h2>{rejected ? "利用が承認されていません" : "管理者の承認を待っています"}</h2>
-        <p>{rejected ? "必要な場合は運営担当者に確認してください。" : "承認後、もう一度この画面を開くと空き日程を入力できます。"}</p>
-        <button
-          type="button"
-          className="approvalDiscordLogout"
-          onClick={() => void onSignOut()}
-        >
-          <span className="discordLogoutIcon" aria-hidden="true" />
-          <span>ログアウト</span>
-        </button>
-      </div>
     </section>
   );
 }
@@ -747,71 +531,9 @@ function ScreenTitle({
   );
 }
 
-function defaultScheduleDate(dateKeys: string[], now: Date) {
-  const today = toDateKey(now);
-  return dateKeys.find((date) => date >= today) ?? dateKeys.at(-1) ?? "";
-}
-
-function scheduleRowLabel(event: ScheduleEvent) {
-  return event.team.trim() || event.assignee.trim() || event.title;
-}
-
-function scheduleSlotKey(event: ScheduleEvent) {
-  return `${event.start_time ?? ""}|${event.end_time ?? ""}`;
-}
-
-function compareScheduleEvents(left: ScheduleEvent, right: ScheduleEvent) {
-  return eventStart(left).getTime() - eventStart(right).getTime()
-    || left.title.localeCompare(right.title, "ja");
-}
-
-function eventStart(event: ScheduleEvent) {
-  const date = parseDate(event.event_date);
-  const [hours, minutes, seconds] = parseTime(event.start_time);
-  date.setHours(hours, minutes, seconds, 0);
-  return date;
-}
-
-function eventEnd(event: ScheduleEvent) {
-  const start = eventStart(event);
-  if (!event.end_time) {
-    if (event.start_time) return new Date(start.getTime() + 60 * 60 * 1000);
-    const endOfDay = new Date(start);
-    endOfDay.setHours(23, 59, 59, 999);
-    return endOfDay;
-  }
-  const end = parseDate(event.event_date);
-  const [hours, minutes, seconds] = parseTime(event.end_time);
-  end.setHours(hours, minutes, seconds, 0);
-  if (end <= start) end.setDate(end.getDate() + 1);
-  return end;
-}
-
-function isEventActive(event: ScheduleEvent, now: Date) {
-  return eventStart(event) <= now && now < eventEnd(event);
-}
-
 function parseDate(dateKey: string) {
   const [year, month, day] = dateKey.split("-").map(Number);
   return new Date(year, month - 1, day);
-}
-
-function parseTime(time: string | null) {
-  if (!time) return [0, 0, 0] as const;
-  const [hours, minutes, seconds] = time.split(":").map(Number);
-  return [hours || 0, minutes || 0, seconds || 0] as const;
-}
-
-function formatTime(time: string | null) {
-  return time ? time.slice(0, 5) : "";
-}
-
-function formatTimeRange(event: ScheduleEvent) {
-  const start = formatTime(event.start_time);
-  const end = formatTime(event.end_time);
-  if (!start && !end) return "終日";
-  if (!end) return start;
-  return `${start}〜${end}`;
 }
 
 function formatJapaneseDate(dateKey: string) {
@@ -820,10 +542,39 @@ function formatJapaneseDate(dateKey: string) {
   return `${date.getMonth() + 1}月${date.getDate()}日`;
 }
 
-function scheduleEventSummary(event: ScheduleEvent) {
-  return [event.title, formatTimeRange(event), event.location, event.assignee]
-    .filter(Boolean)
-    .join("・");
+function formatJapaneseDateWithWeekday(dateKey: string) {
+  const date = parseDate(dateKey);
+  return `${formatJapaneseDate(dateKey)}（${WEEKDAYS[date.getDay()]}）`;
+}
+
+function groupColor(group: GroupName | null) {
+  if (!group) return "#8a8a8a";
+  const colors: Record<GroupName, string> = {
+    "Class-leader": "#ffffff",
+    Layout: "#45d483",
+    Gimmick: "#4e9cff",
+    Decoration: "#a66bff",
+    Gadget: "#ff5c61",
+    Story: "#f3cf42",
+  };
+  return colors[group];
+}
+
+function groupLabel(group: GroupName | null) {
+  if (!group) return "班未設定";
+  const labels: Record<GroupName, string> = {
+    "Class-leader": "クラス文化祭係",
+    Layout: "レイアウト班",
+    Gimmick: "ギミック班",
+    Decoration: "装飾班",
+    Gadget: "小道具制作班",
+    Story: "物語班",
+  };
+  return labels[group];
+}
+
+function groupOrder(group: GroupName | null) {
+  return ["Class-leader", "Layout", "Gimmick", "Decoration", "Gadget", "Story"].indexOf(group ?? "");
 }
 
 function getCalendarDays(month: Date) {
