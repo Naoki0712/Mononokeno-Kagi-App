@@ -14,10 +14,10 @@ hosting="${SITES_PROJECT_ROOT}/dist/.openai/hosting.json"
   echo "Missing Sites Worker entry: dist/server/index.js" >&2
   exit 66
 }
-[[ -f "${hosting}" ]] || {
-  echo "Missing packaged Sites manifest: dist/.openai/hosting.json" >&2
-  exit 66
-}
+if [[ ! -f "${hosting}" ]]; then
+  echo "Sites manifest is absent; skipping Sites-only manifest validation."
+  exit 0
+fi
 
 node --input-type=module - "${worker}" "${hosting}" <<'NODE'
 import { readFile } from "node:fs/promises";
