@@ -758,8 +758,17 @@ begin
 end;
 $$;
 
-drop trigger if exists sync_private_member_schedule on public.member_availability;
-drop trigger if exists sync_private_member_profile on public.portal_members;
+do $legacy_cleanup$
+begin
+  if to_regclass('public.member_availability') is not null then
+    execute 'drop trigger if exists sync_private_member_schedule on public.member_availability';
+  end if;
+
+  if to_regclass('public.portal_members') is not null then
+    execute 'drop trigger if exists sync_private_member_profile on public.portal_members';
+  end if;
+end;
+$legacy_cleanup$;
 drop function if exists private.sync_member_availability();
 drop function if exists private.sync_portal_member_profile();
 
