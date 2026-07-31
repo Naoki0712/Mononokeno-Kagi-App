@@ -262,7 +262,6 @@ function MemberScheduleCalendar({
         <div className="memberMonthHeading">
           <CalendarDays aria-hidden="true" />
           <strong>2026年8月</strong>
-          <span>●は自分が参加する日です</span>
         </div>
         <div className="memberWeekdays">
           {WEEKDAYS.map((day) => <span key={day}>{day}</span>)}
