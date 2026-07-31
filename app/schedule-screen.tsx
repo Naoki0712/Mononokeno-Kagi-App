@@ -1,5 +1,7 @@
 "use client";
 
+// Keep this screen in the GitHub Pages static build.
+
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { CalendarDays, List, LoaderCircle, NotebookPen, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
