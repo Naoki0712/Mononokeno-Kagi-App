@@ -10,14 +10,14 @@ fi
 worker="${SITES_PROJECT_ROOT}/dist/server/index.js"
 hosting="${SITES_PROJECT_ROOT}/dist/.openai/hosting.json"
 
+if [[ ! -f "${hosting}" ]]; then
+  echo "Sites manifest is absent; skipping Sites-only artifact validation."
+  exit 0
+fi
 [[ -f "${worker}" ]] || {
   echo "Missing Sites Worker entry: dist/server/index.js" >&2
   exit 66
 }
-if [[ ! -f "${hosting}" ]]; then
-  echo "Sites manifest is absent; skipping Sites-only manifest validation."
-  exit 0
-fi
 
 node --input-type=module - "${worker}" "${hosting}" <<'NODE'
 import { readFile } from "node:fs/promises";
