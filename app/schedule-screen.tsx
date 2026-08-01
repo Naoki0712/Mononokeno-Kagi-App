@@ -11,6 +11,7 @@ type ScheduleScreenProps = {
   supabaseUrl: string;
   supabasePublishableKey: string;
   classmateToken?: string;
+  classmateId?: string;
 };
 
 type AvailabilityStatus = "available" | "unavailable";
@@ -50,6 +51,7 @@ export function ScheduleScreen({
   supabaseUrl,
   supabasePublishableKey,
   classmateToken = "",
+  classmateId = "",
 }: ScheduleScreenProps) {
   const client = useMemo(() => {
     if (!supabaseUrl || !supabasePublishableKey) return null;
@@ -117,6 +119,7 @@ export function ScheduleScreen({
         rows={memberSchedules}
         loading={scheduleLoading}
         scheduleError={scheduleError}
+        viewerId={classmateId}
         authError="Supabaseの接続設定を読み込めませんでした。"
       />
     );
@@ -133,6 +136,7 @@ export function ScheduleScreen({
         rows={memberSchedules}
         loading={scheduleLoading}
         scheduleError={scheduleError}
+        viewerId={classmateId}
       />
     );
   }
@@ -147,6 +151,7 @@ export function ScheduleScreen({
       rows={memberSchedules}
       loading={scheduleLoading}
       scheduleError={scheduleError}
+      viewerId={classmateId}
     />
   );
 }
@@ -178,6 +183,7 @@ function SchedulePortal({
   rows,
   loading,
   scheduleError,
+  viewerId,
   authError = "",
   title = "スケジュールを確認する",
 }: {
@@ -190,6 +196,7 @@ function SchedulePortal({
   rows: MemberScheduleRow[];
   loading: boolean;
   scheduleError: string;
+  viewerId: string;
   authError?: string;
   title?: string;
 }) {
@@ -206,6 +213,7 @@ function SchedulePortal({
           loading={loading}
           error={scheduleError}
           mode={calendarMode}
+          viewerId={viewerId}
           onDateClick={calendarMode === "month" ? onAction : undefined}
         />
       </div>
@@ -235,18 +243,23 @@ function MemberScheduleCalendar({
   loading,
   error,
   mode,
+  viewerId,
   onDateClick,
 }: {
   rows: MemberScheduleRow[];
   loading: boolean;
   error: string;
   mode: "month" | "details";
+  viewerId: string;
   onDateClick?: () => void;
 }) {
   const calendarDays = useMemo(() => getCalendarDays(AVAILABILITY_MONTH), []);
   const [dialog, setDialog] = useState<{ group: GroupName | null; ids: string[] } | null>(null);
   const selfRows = rows.filter((row) => row.is_self && row.status === "available");
   const selfDates = [...new Set(selfRows.map((row) => row.available_date))].sort();
+  const detailDates = viewerId === "2200"
+    ? [...new Set(rows.filter((row) => row.status === "available").map((row) => row.available_date))].sort()
+    : selfDates;
 
   useEffect(() => {
     if (mode !== "details") return;
@@ -296,7 +309,7 @@ function MemberScheduleCalendar({
       </div>}
 
       {mode === "details" && <div className="memberDetailsList">
-        {selfDates.map((date) => (
+        {detailDates.map((date) => (
           <article className="memberDetailDay" id={`schedule-day-${date}`} key={date}>
             <p>{formatJapaneseDateWithWeekday(date)} 13:30〜14:30</p>
             <div className="memberDetailGroups">
@@ -310,7 +323,7 @@ function MemberScheduleCalendar({
             </div>
           </article>
         ))}
-        {!selfDates.length && <p className="memberNoSchedule">参加する予定はまだありません</p>}
+        {!detailDates.length && <p className="memberNoSchedule">参加する予定はまだありません</p>}
       </div>}
       {dialog && <div className="groupDialogBackdrop" role="presentation" onClick={() => setDialog(null)}>
         <section className="groupDialog" role="dialog" aria-modal="true" aria-labelledby="group-dialog-title" onClick={(event) => event.stopPropagation()}>
