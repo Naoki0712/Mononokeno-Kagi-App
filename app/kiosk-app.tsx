@@ -31,6 +31,7 @@ export function KioskApp({
   const [screen, setScreen] = useState<Screen>("home");
   const [portalAccess, setPortalAccess] = useState<"loading" | "classmate" | "none">("loading");
   const [classmateToken, setClassmateToken] = useState("");
+  const [classmateId, setClassmateId] = useState("");
 
   useEffect(() => {
     if (!client) {
@@ -44,6 +45,7 @@ export function KioskApp({
       if (!token) {
         if (active) {
           setClassmateToken("");
+          setClassmateId("");
           setPortalAccess("none");
         }
         return;
@@ -52,11 +54,13 @@ export function KioskApp({
       if (active) {
         if (data?.ok) {
           setClassmateToken(token);
+          setClassmateId(String(data.student_id ?? ""));
           setPortalAccess("classmate");
         }
         else {
           window.localStorage.removeItem("mononoke-classmate-session");
           setClassmateToken("");
+          setClassmateId("");
           setPortalAccess("none");
         }
       }
@@ -71,6 +75,7 @@ export function KioskApp({
   const logoutPortal = async () => {
     window.localStorage.removeItem("mononoke-classmate-session");
     setClassmateToken("");
+    setClassmateId("");
     setScreen("home");
     setPortalAccess("none");
   };
@@ -99,8 +104,9 @@ export function KioskApp({
       {portalAccess === "none" && client && (
         <ClassmateLogin
           client={client}
-          onSuccess={(token) => {
+          onSuccess={(token, studentId) => {
             setClassmateToken(token);
+            setClassmateId(studentId);
             setPortalAccess("classmate");
           }}
         />
@@ -116,6 +122,7 @@ export function KioskApp({
           supabaseUrl={supabaseUrl}
           supabasePublishableKey={supabasePublishableKey}
           classmateToken={classmateToken}
+          classmateId={classmateId}
         />
       )}
 
@@ -147,7 +154,7 @@ function ClassmateLogin({
   onSuccess,
 }: {
   client: SupabaseClient;
-  onSuccess: (token: string) => void;
+  onSuccess: (token: string, studentId: string) => void;
 }) {
   const [studentId, setStudentId] = useState("");
   const [password, setPassword] = useState("");
@@ -168,7 +175,7 @@ function ClassmateLogin({
       return;
     }
     window.localStorage.setItem("mononoke-classmate-session", data.token);
-    onSuccess(data.token);
+    onSuccess(data.token, String(data.student_id ?? studentId));
   };
 
   return (
