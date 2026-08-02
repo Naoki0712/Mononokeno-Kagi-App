@@ -3641,7 +3641,7 @@ button:focus-visible {
   width: clamp(18px, 2vw, 34px);
   aspect-ratio: 1;
   border: 2px solid rgb(255 255 255 / 45%);
-  border-radius: 50%;
+  border-radius: 0;
   background: var(--group-color);
 }
 
