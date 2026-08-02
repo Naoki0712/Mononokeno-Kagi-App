@@ -278,7 +278,6 @@ function MemberScheduleCalendar({
   const calendarDays = useMemo(() => getCalendarDays(AVAILABILITY_MONTH), []);
   const [dialog, setDialog] = useState<{ group: GroupName | null; ids: string[] } | null>(null);
   const selfRows = rows.filter((row) => row.is_self && row.status === "available");
-  const selfDates = [...new Set(selfRows.map((row) => row.available_date))].sort();
   const detailDates = [...new Set(
     rows.filter((row) => row.status === "available").map((row) => row.available_date),
   )].sort();
@@ -490,7 +489,7 @@ function AvailabilityCalendar({
       </div>
 
       <div className="availabilityContent">
-        <p className="availabilityInstruction">13:30〜14:30に学校に来れる日を選んでください。なお、土休日は行いません。</p>
+        <p className="availabilityInstruction">8月18日〜31日のうち、13:30〜14:30に学校に来れる日を選んでください。なお、土休日は行いません。</p>
         {!editingEnabled && <strong className="editingClosed">編集受付は終了しました</strong>}
 
         {dataError && <p className="availabilityError" role="alert">{dataError}</p>}
