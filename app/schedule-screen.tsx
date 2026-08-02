@@ -3,7 +3,7 @@
 // Keep this screen in the GitHub Pages static build.
 
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import { CalendarDays, List, LoaderCircle, NotebookPen, X } from "lucide-react";
+import { CalendarDays, List, LoaderCircle, NotebookPen, Plus, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 type ScheduleScreenProps = {
@@ -33,14 +33,16 @@ type GroupName = "Class-leader" | "Layout" | "Gimmick" | "Decoration" | "Gadget"
 
 const WEEKDAYS = ["日", "月", "火", "水", "木", "金", "土"];
 const AVAILABILITY_MONTH = new Date(2026, 7, 1);
-const AVAILABILITY_CLOSED_START = "2026-08-10";
-const AVAILABILITY_CLOSED_END = "2026-08-17";
+const AVAILABILITY_SELECTABLE_START = "2026-08-18";
+const AVAILABILITY_SELECTABLE_END = "2026-08-31";
 const MANUALS = [
   "🟢レイアウト班",
   "🔵ギミック班",
   "🟣装飾班",
   "🔴小道具制作班",
   "🟡物語班",
+  "🟠看板ベース",
+  "🟦妖怪ベース",
   "受付",
   "スタッフ",
   "宣伝",
@@ -106,8 +108,24 @@ export function ScheduleScreen({
     };
   }, [classmateToken, client]);
 
+  const viewerGroup = memberSchedules.find(
+    (row) => row.id === classmateId && row.group_name !== null,
+  )?.group_name ?? null;
+  const canEditAvailability = !scheduleLoading && viewerGroup === null;
+
   if (view === "manuals") {
     return <ManualList onBack={() => setView("schedule")} />;
+  }
+
+  if (view === "availability" && client) {
+    return (
+      <AvailabilityCalendar
+        client={client}
+        classmateToken={classmateToken}
+        onBack={() => setView("schedule")}
+        editingEnabled={canEditAvailability}
+      />
+    );
   }
 
   if (!client) {
@@ -137,6 +155,7 @@ export function ScheduleScreen({
         loading={scheduleLoading}
         scheduleError={scheduleError}
         viewerId={classmateId}
+        onAvailability={canEditAvailability ? () => setView("availability") : undefined}
       />
     );
   }
@@ -152,6 +171,7 @@ export function ScheduleScreen({
       loading={scheduleLoading}
       scheduleError={scheduleError}
       viewerId={classmateId}
+      onAvailability={canEditAvailability ? () => setView("availability") : undefined}
     />
   );
 }
@@ -200,7 +220,6 @@ function SchedulePortal({
   authError?: string;
   title?: string;
 }) {
-  const cornerAction = onAction ?? onAvailability;
   return (
     <SimpleSchedulePage onBack={onBack} title={title}>
       <div
@@ -218,15 +237,26 @@ function SchedulePortal({
         />
       </div>
 
-      {cornerAction && actionLabel && (
+      {onAction && actionLabel && (
         <button
           type="button"
           className="scheduleAvailabilityEntry"
-          onClick={cornerAction}
+          onClick={onAction}
           aria-label={actionLabel}
         >
           {calendarMode === "month" ? <List aria-hidden="true" /> : <CalendarDays aria-hidden="true" />}
           <span>{actionLabel}</span>
+        </button>
+      )}
+      {onAvailability && (
+        <button
+          type="button"
+          className="scheduleAvailabilityAdd"
+          onClick={onAvailability}
+          aria-label="空き日程を選択する"
+          title="空き日程を選択する"
+        >
+          <Plus aria-hidden="true" />
         </button>
       )}
       <button type="button" className="scheduleManualEntry" onClick={onManuals}>
@@ -257,9 +287,9 @@ function MemberScheduleCalendar({
   const [dialog, setDialog] = useState<{ group: GroupName | null; ids: string[] } | null>(null);
   const selfRows = rows.filter((row) => row.is_self && row.status === "available");
   const selfDates = [...new Set(selfRows.map((row) => row.available_date))].sort();
-  const detailDates = viewerId === "2200"
-    ? [...new Set(rows.filter((row) => row.status === "available").map((row) => row.available_date))].sort()
-    : selfDates;
+  const detailDates = [...new Set(
+    rows.filter((row) => row.status === "available").map((row) => row.available_date),
+  )].sort();
 
   useEffect(() => {
     if (mode !== "details") return;
@@ -375,8 +405,6 @@ function ManualList({ onBack }: { onBack: () => void }) {
   );
 }
 
-// Kept as a hidden maintenance view so the stored availability data and editing logic remain intact.
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function AvailabilityCalendar({
   client,
   classmateToken = "",
@@ -490,8 +518,9 @@ function AvailabilityCalendar({
               const isSunday = day.getDay() === 0;
               const isSaturday = day.getDay() === 6;
               const isWeekend = isSunday || isSaturday;
-              const isClosedPeriod = dateKey >= AVAILABILITY_CLOSED_START && dateKey <= AVAILABILITY_CLOSED_END;
-              const isUnavailableDate = isWeekend || isClosedPeriod;
+              const isOutsideSelectableRange =
+                dateKey < AVAILABILITY_SELECTABLE_START || dateKey > AVAILABILITY_SELECTABLE_END;
+              const isUnavailableDate = isWeekend || isOutsideSelectableRange;
 
               if (!inMonth) {
                 return <div className="availabilityBlank" key={dateKey} role="gridcell" />;
@@ -501,7 +530,7 @@ function AvailabilityCalendar({
                 <button
                   type="button"
                   key={dateKey}
-                  className={`availabilityDay ${status ?? "unset"} ${isSunday ? "sunday" : ""} ${isSaturday ? "saturday" : ""} ${isClosedPeriod ? "closedPeriod" : ""}`}
+                  className={`availabilityDay ${status ?? "unset"} ${isSunday ? "sunday" : ""} ${isSaturday ? "saturday" : ""} ${isOutsideSelectableRange ? "closedPeriod" : ""}`}
                   onClick={() => {
                     if (!isUnavailableDate) void cycleAvailability(dateKey);
                   }}
@@ -585,8 +614,8 @@ function groupLabel(group: GroupName | null) {
     Decoration: "装飾班",
     Gadget: "小道具制作班",
     Story: "物語班",
-    Signboard: "看板班",
-    Yokai: "妖怪班",
+    Signboard: "看板ベース",
+    Yokai: "妖怪ベース",
   };
   return labels[group];
 }
