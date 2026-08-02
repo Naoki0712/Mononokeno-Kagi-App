@@ -137,7 +137,6 @@ export function ScheduleScreen({
         rows={memberSchedules}
         loading={scheduleLoading}
         scheduleError={scheduleError}
-        viewerId={classmateId}
         authError="Supabaseの接続設定を読み込めませんでした。"
       />
     );
@@ -154,7 +153,6 @@ export function ScheduleScreen({
         rows={memberSchedules}
         loading={scheduleLoading}
         scheduleError={scheduleError}
-        viewerId={classmateId}
         onAvailability={canEditAvailability ? () => setView("availability") : undefined}
       />
     );
@@ -170,7 +168,6 @@ export function ScheduleScreen({
       rows={memberSchedules}
       loading={scheduleLoading}
       scheduleError={scheduleError}
-      viewerId={classmateId}
       onAvailability={canEditAvailability ? () => setView("availability") : undefined}
     />
   );
@@ -203,7 +200,6 @@ function SchedulePortal({
   rows,
   loading,
   scheduleError,
-  viewerId,
   authError = "",
   title = "スケジュールを確認する",
 }: {
@@ -216,7 +212,6 @@ function SchedulePortal({
   rows: MemberScheduleRow[];
   loading: boolean;
   scheduleError: string;
-  viewerId: string;
   authError?: string;
   title?: string;
 }) {
@@ -232,7 +227,6 @@ function SchedulePortal({
           loading={loading}
           error={scheduleError}
           mode={calendarMode}
-          viewerId={viewerId}
           onDateClick={calendarMode === "month" ? onAction : undefined}
         />
       </div>
@@ -273,14 +267,12 @@ function MemberScheduleCalendar({
   loading,
   error,
   mode,
-  viewerId,
   onDateClick,
 }: {
   rows: MemberScheduleRow[];
   loading: boolean;
   error: string;
   mode: "month" | "details";
-  viewerId: string;
   onDateClick?: () => void;
 }) {
   const calendarDays = useMemo(() => getCalendarDays(AVAILABILITY_MONTH), []);
