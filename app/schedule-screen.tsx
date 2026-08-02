@@ -29,7 +29,7 @@ type MemberScheduleRow = {
   is_self: boolean;
 };
 
-type GroupName = "Class-leader" | "Layout" | "Gimmick" | "Decoration" | "Gadget" | "Story";
+type GroupName = "Class-leader" | "Layout" | "Gimmick" | "Decoration" | "Gadget" | "Story" | "Signboard" | "Yokai";
 
 const WEEKDAYS = ["日", "月", "火", "水", "木", "金", "土"];
 const AVAILABILITY_MONTH = new Date(2026, 7, 1);
@@ -570,6 +570,8 @@ function groupColor(group: GroupName | null) {
     Decoration: "#a66bff",
     Gadget: "#ff5c61",
     Story: "#f3cf42",
+    Signboard: "#ff9f43",
+    Yokai: "#35c9b5",
   };
   return colors[group];
 }
@@ -583,12 +585,14 @@ function groupLabel(group: GroupName | null) {
     Decoration: "装飾班",
     Gadget: "小道具制作班",
     Story: "物語班",
+    Signboard: "看板班",
+    Yokai: "妖怪班",
   };
   return labels[group];
 }
 
 function groupOrder(group: GroupName | null) {
-  return ["Class-leader", "Layout", "Gimmick", "Decoration", "Gadget", "Story"].indexOf(group ?? "");
+  return ["Class-leader", "Layout", "Gimmick", "Decoration", "Gadget", "Story", "Signboard", "Yokai"].indexOf(group ?? "");
 }
 
 function getCalendarDays(month: Date) {
