@@ -3770,6 +3770,35 @@ button:focus-visible {
   text-align: center;
 }
 
+.scheduleAvailabilityAdd {
+  position: absolute;
+  top: 86px;
+  right: 28px;
+  z-index: 24;
+  display: grid;
+  width: 52px;
+  height: 52px;
+  place-items: center;
+  border: 2px solid var(--white);
+  border-radius: 50%;
+  padding: 0;
+  background: rgb(5 5 5 / 74%);
+  color: var(--white);
+  cursor: pointer;
+}
+
+.scheduleAvailabilityAdd svg {
+  width: 32px;
+  height: 32px;
+  stroke-width: 2;
+}
+
+.scheduleAvailabilityAdd:hover {
+  background: var(--white);
+  color: var(--panel);
+  transform: translateY(-2px);
+}
+
 .scheduleManualEntry {
   position: absolute;
   right: 27px;
@@ -4589,6 +4618,18 @@ button:focus-visible {
 }
 
 @media (max-width: 680px) {
+  .scheduleAvailabilityAdd {
+    top: 64px;
+    right: 16px;
+    width: 44px;
+    height: 44px;
+  }
+
+  .scheduleAvailabilityAdd svg {
+    width: 28px;
+    height: 28px;
+  }
+
   .screenHeader,
   .videoScreen .screenHeader,
   .combinedBackTitle,
