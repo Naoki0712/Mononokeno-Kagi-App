@@ -325,7 +325,9 @@ function MemberScheduleCalendar({
                 <span>{day.getDate()}</span>
                 {selfSchedule && (
                   <span className="selfScheduleMarkers" aria-label="所属">
-                    <i className="selfScheduleDot groupMarker" style={{ "--group-color": groupColor(selfSchedule.group_name) } as React.CSSProperties} />
+                    {selfSchedule.group_name && (
+                      <i className="selfScheduleDot groupMarker" style={{ "--group-color": groupColor(selfSchedule.group_name) } as React.CSSProperties} />
+                    )}
                     {selfSchedule.base_name && (
                       <i className="selfScheduleDot baseMarker" style={{ "--group-color": baseColor(selfSchedule.base_name) } as React.CSSProperties} />
                     )}
@@ -373,9 +375,8 @@ function MemberScheduleCalendar({
 function scheduleCategories(rows: MemberScheduleRow[]) {
   const categories = new Map<string, { kind: "group" | "base"; name: GroupName | BaseName | null; ids: string[]; isSelf: boolean }>();
   rows.forEach((row) => {
-    const entries: Array<{ kind: "group" | "base"; name: GroupName | BaseName | null }> = [
-      { kind: "group", name: row.group_name },
-    ];
+    const entries: Array<{ kind: "group" | "base"; name: GroupName | BaseName | null }> = [];
+    if (row.group_name) entries.push({ kind: "group", name: row.group_name });
     if (row.base_name) entries.push({ kind: "base", name: row.base_name });
     entries.forEach(({ kind, name }) => {
       const key = `${kind}:${name ?? "unset"}`;
