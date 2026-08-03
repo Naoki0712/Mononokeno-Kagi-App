@@ -180,6 +180,8 @@ export function ScheduleScreen({
       actionLabel="詳細の予定"
       calendarMode="month"
       rows={memberSchedules}
+      client={client}
+      classmateToken={classmateToken}
       loading={scheduleLoading}
       scheduleError={scheduleError}
       onAvailability={canEditAvailability ? () => setView("availability") : undefined}
