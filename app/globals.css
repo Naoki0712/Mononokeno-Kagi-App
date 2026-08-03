@@ -4871,3 +4871,32 @@ button:focus-visible {
     flex-basis: 45px;
   }
 }
+
+
+/* Daily attendance state in the participant ID dialog. */
+.groupDialogIds .attendanceId {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: 700;
+  padding: 0;
+}
+
+.groupDialogIds button.attendanceId {
+  cursor: pointer;
+}
+
+.groupDialogIds .attendanceId.arrived {
+  color: #45d483;
+}
+
+.groupDialogIds .attendanceId.left {
+  color: #ff5c61;
+}
+
+.attendanceError {
+  color: #ff767a;
+  margin: 12px 0 0;
+}
