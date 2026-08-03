@@ -2,13 +2,13 @@
 
 import Image from "next/image";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import { LogOut } from "lucide-react";
+import { Contactless, LogOut } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { ScheduleScreen } from "./schedule-screen";
 
 const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 
-type Screen = "home" | "schedule" | "video" | "map";
+type Screen = "home" | "schedule" | "attendance" | "video" | "map";
 
 type KioskAppProps = {
   supabaseUrl: string;
@@ -124,6 +124,21 @@ export function KioskApp({
           classmateToken={classmateToken}
           classmateId={classmateId}
         />
+      )}
+
+      {portalAccess !== "loading" && portalAccess !== "none" && screen === "attendance" && (
+        <section className="subScreen touchAttendanceScreen" aria-labelledby="touch-attendance-title">
+          <BackTitle
+            id="touch-attendance-title"
+            title="タッチで入出場"
+            onBack={() => setScreen("home")}
+          />
+          <div className="touchAttendanceSetup">
+            <Contactless aria-hidden="true" />
+            <p>このスマホを入出場の受付端末として使用します。</p>
+            <strong>読み取り方式を設定中です</strong>
+          </div>
+        </section>
       )}
 
       {portalAccess !== "loading" && portalAccess !== "none" && screen === "video" && (
@@ -242,6 +257,16 @@ function HomeScreen({
           </button>
         </div>
       </nav>
+
+      <button
+        type="button"
+        className="homeTouchAttendance"
+        onClick={() => onNavigate("attendance")}
+        aria-label="タッチで入出場を開く"
+      >
+        <Contactless aria-hidden="true" />
+        <span>タッチで入出場</span>
+      </button>
 
       <button
         type="button"
