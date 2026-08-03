@@ -26,10 +26,12 @@ type MemberScheduleRow = {
   available_date: string;
   status: AvailabilityStatus;
   group_name: GroupName | null;
+  base_name: BaseName | null;
   is_self: boolean;
 };
 
-type GroupName = "Class-leader" | "Layout" | "Gimmick" | "Decoration" | "Gadget" | "Story" | "Signboard" | "Yokai";
+type GroupName = "Class-leader" | "Layout" | "Gimmick" | "Decoration" | "Gadget" | "Story";
+type BaseName = "Signboard" | "Yokai" | "PR";
 
 const WEEKDAYS = ["日", "月", "火", "水", "木", "金", "土"];
 const AVAILABILITY_MONTH = new Date(2026, 7, 1);
@@ -43,6 +45,7 @@ const MANUALS = [
   "🟡物語班",
   "🟧看板ベース",
   "🟦妖怪ベース",
+  "🟥PR動画・ポスターベース",
   "受付",
   "スタッフ",
   "宣伝",
@@ -276,7 +279,7 @@ function MemberScheduleCalendar({
   onDateClick?: () => void;
 }) {
   const calendarDays = useMemo(() => getCalendarDays(AVAILABILITY_MONTH), []);
-  const [dialog, setDialog] = useState<{ group: GroupName | null; ids: string[] } | null>(null);
+  const [dialog, setDialog] = useState<{ label: string; ids: string[] } | null>(null);
   const selfRows = rows.filter((row) => row.is_self && row.status === "available");
   const detailDates = [...new Set(
     rows.filter((row) => row.status === "available").map((row) => row.available_date),
@@ -321,7 +324,12 @@ function MemberScheduleCalendar({
               >
                 <span>{day.getDate()}</span>
                 {selfSchedule && (
-                  <i className="selfScheduleDot" style={{ "--group-color": groupColor(selfSchedule.group_name) } as React.CSSProperties} />
+                  <span className="selfScheduleMarkers" aria-label="所属">
+                    <i className="selfScheduleDot groupMarker" style={{ "--group-color": groupColor(selfSchedule.group_name) } as React.CSSProperties} />
+                    {selfSchedule.base_name && (
+                      <i className="selfScheduleDot baseMarker" style={{ "--group-color": baseColor(selfSchedule.base_name) } as React.CSSProperties} />
+                    )}
+                  </span>
                 )}
               </button>
             );
@@ -334,13 +342,17 @@ function MemberScheduleCalendar({
           <article className="memberDetailDay" id={`schedule-day-${date}`} key={date}>
             <p>{formatJapaneseDateWithWeekday(date)} 13:30〜14:30</p>
             <div className="memberDetailGroups">
-              {groupRows(rows.filter((row) => row.available_date === date && row.status === "available")).map(({ group, ids, isSelf }) => (
-                <button type="button" className={`memberDetailGroup ${isSelf ? "self" : ""}`}
-                  style={{ "--group-color": groupColor(group) } as React.CSSProperties}
-                  onClick={() => setDialog({ group, ids })} key={group ?? "unset"}>
-                  <i aria-hidden="true" /><span>{groupLabel(group)}</span>
-                </button>
-              ))}
+              {scheduleCategories(rows.filter((row) => row.available_date === date && row.status === "available")).map(({ kind, name, ids, isSelf }) => {
+                const label = kind === "group" ? groupLabel(name as GroupName | null) : baseLabel(name as BaseName);
+                const color = kind === "group" ? groupColor(name as GroupName | null) : baseColor(name as BaseName);
+                return (
+                  <button type="button" className={`memberDetailGroup ${kind}Marker ${isSelf ? "self" : ""}`}
+                    style={{ "--group-color": color } as React.CSSProperties}
+                    onClick={() => setDialog({ label, ids })} key={`${kind}-${name ?? "unset"}`}>
+                    <i aria-hidden="true" /><span>{label}</span>
+                  </button>
+                );
+              })}
             </div>
           </article>
         ))}
@@ -349,7 +361,7 @@ function MemberScheduleCalendar({
       {dialog && <div className="groupDialogBackdrop" role="presentation" onClick={() => setDialog(null)}>
         <section className="groupDialog" role="dialog" aria-modal="true" aria-labelledby="group-dialog-title" onClick={(event) => event.stopPropagation()}>
           <button type="button" className="groupDialogClose" onClick={() => setDialog(null)} aria-label="閉じる"><X aria-hidden="true" /></button>
-          <h2 id="group-dialog-title">{groupLabel(dialog.group)}</h2>
+          <h2 id="group-dialog-title">{dialog.label}</h2>
           <p>参加できる人のID</p>
           <div className="groupDialogIds">{dialog.ids.map((id) => <strong key={id}>{id}</strong>)}</div>
         </section>
@@ -358,17 +370,24 @@ function MemberScheduleCalendar({
   );
 }
 
-function groupRows(rows: MemberScheduleRow[]) {
-  const grouped = new Map<GroupName | null, { ids: string[]; isSelf: boolean }>();
+function scheduleCategories(rows: MemberScheduleRow[]) {
+  const categories = new Map<string, { kind: "group" | "base"; name: GroupName | BaseName | null; ids: string[]; isSelf: boolean }>();
   rows.forEach((row) => {
-    const current = grouped.get(row.group_name) ?? { ids: [], isSelf: false };
-    if (!current.ids.includes(row.id)) current.ids.push(row.id);
-    current.isSelf ||= row.is_self;
-    grouped.set(row.group_name, current);
+    const entries: Array<{ kind: "group" | "base"; name: GroupName | BaseName | null }> = [
+      { kind: "group", name: row.group_name },
+    ];
+    if (row.base_name) entries.push({ kind: "base", name: row.base_name });
+    entries.forEach(({ kind, name }) => {
+      const key = `${kind}:${name ?? "unset"}`;
+      const current = categories.get(key) ?? { kind, name, ids: [], isSelf: false };
+      if (!current.ids.includes(row.id)) current.ids.push(row.id);
+      current.isSelf ||= row.is_self;
+      categories.set(key, current);
+    });
   });
-  return [...grouped.entries()]
-    .map(([group, value]) => ({ group, ids: value.ids.sort(), isSelf: value.isSelf }))
-    .sort((a, b) => groupOrder(a.group) - groupOrder(b.group));
+  return [...categories.values()]
+    .map((value) => ({ ...value, ids: value.ids.sort() }))
+    .sort((a, b) => categoryOrder(a.kind, a.name) - categoryOrder(b.kind, b.name));
 }
 
 function ScheduleState({ message, icon }: { message: string; icon?: "loading" }) {
@@ -590,8 +609,6 @@ function groupColor(group: GroupName | null) {
     Decoration: "#a66bff",
     Gadget: "#ff5c61",
     Story: "#f3cf42",
-    Signboard: "#ff9f43",
-    Yokai: "#35c9b5",
   };
   return colors[group];
 }
@@ -605,14 +622,22 @@ function groupLabel(group: GroupName | null) {
     Decoration: "装飾班",
     Gadget: "小道具制作班",
     Story: "物語班",
-    Signboard: "看板ベース",
-    Yokai: "妖怪ベース",
   };
   return labels[group];
 }
 
-function groupOrder(group: GroupName | null) {
-  return ["Class-leader", "Layout", "Gimmick", "Decoration", "Gadget", "Story", "Signboard", "Yokai"].indexOf(group ?? "");
+function baseColor(base: BaseName) {
+  return { Signboard: "#ff9f43", Yokai: "#35c9b5", PR: "#ff5c61" }[base];
+}
+
+function baseLabel(base: BaseName) {
+  return { Signboard: "看板ベース", Yokai: "妖怪ベース", PR: "PR動画・ポスターベース" }[base];
+}
+
+function categoryOrder(kind: "group" | "base", name: GroupName | BaseName | null) {
+  const groups: Array<GroupName | null> = ["Class-leader", "Layout", "Gimmick", "Decoration", "Gadget", "Story", null];
+  const bases: BaseName[] = ["Signboard", "Yokai", "PR"];
+  return kind === "group" ? groups.indexOf(name as GroupName | null) : 100 + bases.indexOf(name as BaseName);
 }
 
 function getCalendarDays(month: Date) {
