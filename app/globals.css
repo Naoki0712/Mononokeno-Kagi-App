@@ -3634,15 +3634,29 @@ button:focus-visible {
   cursor: pointer;
 }
 
-.selfScheduleDot {
+.selfScheduleMarkers {
   position: absolute;
-  right: 15%;
-  bottom: 15%;
-  width: clamp(18px, 2vw, 34px);
+  right: 10%;
+  bottom: 12%;
+  display: flex;
+  align-items: center;
+  gap: clamp(3px, 0.35vw, 7px);
+}
+
+.selfScheduleDot {
+  position: static;
+  width: clamp(14px, 1.55vw, 27px);
   aspect-ratio: 1;
   border: 2px solid rgb(255 255 255 / 45%);
-  border-radius: 0;
   background: var(--group-color);
+}
+
+.selfScheduleDot.groupMarker {
+  border-radius: 50%;
+}
+
+.selfScheduleDot.baseMarker {
+  border-radius: 0;
 }
 
 .selfScheduleChip {
@@ -3875,8 +3889,15 @@ button:focus-visible {
   height: 0.9em;
   flex: 0 0 0.9em;
   border: 2px solid rgb(255 255 255 / 45%);
-  border-radius: 50%;
   background: var(--group-color);
+}
+
+.memberDetailGroup.groupMarker i {
+  border-radius: 50%;
+}
+
+.memberDetailGroup.baseMarker i {
+  border-radius: 0;
 }
 
 .memberDetailGroup.self {
