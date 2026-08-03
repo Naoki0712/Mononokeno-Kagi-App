@@ -346,10 +346,13 @@ function MemberScheduleCalendar({
     if (result.error) {
       setAttendanceError("登下校状況を保存できませんでした。");
     } else {
-      setAttendance((current) => ({
-        ...current,
-        [`${date}:${id}`]: result.data as AttendanceStatus,
-      }));
+      setAttendance((current) => {
+        const updated = { ...current };
+        const key = `${date}:${id}`;
+        if (result.data === null) delete updated[key];
+        else updated[key] = result.data as AttendanceStatus;
+        return updated;
+      });
     }
     setSavingAttendance(false);
   };
