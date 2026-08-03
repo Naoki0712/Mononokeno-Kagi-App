@@ -15,6 +15,13 @@ type ScheduleScreenProps = {
 };
 
 type AvailabilityStatus = "available" | "unavailable";
+type AttendanceStatus = "arrived" | "left";
+
+type AttendanceRow = {
+  attendance_date: string;
+  student_id: string;
+  status: AttendanceStatus;
+};
 
 type AvailabilityRow = {
   available_date: string;
@@ -138,6 +145,8 @@ export function ScheduleScreen({
         onManuals={() => setView("manuals")}
         calendarMode="month"
         rows={memberSchedules}
+        client={client}
+        classmateToken={classmateToken}
         loading={scheduleLoading}
         scheduleError={scheduleError}
         authError="Supabaseの接続設定を読み込めませんでした。"
@@ -154,6 +163,8 @@ export function ScheduleScreen({
         actionLabel="月全体の予定"
         calendarMode="details"
         rows={memberSchedules}
+        client={client}
+        classmateToken={classmateToken}
         loading={scheduleLoading}
         scheduleError={scheduleError}
         onAvailability={canEditAvailability ? () => setView("availability") : undefined}
@@ -201,6 +212,8 @@ function SchedulePortal({
   actionLabel,
   calendarMode = "month",
   rows,
+  client,
+  classmateToken,
   loading,
   scheduleError,
   authError = "",
@@ -213,6 +226,8 @@ function SchedulePortal({
   actionLabel?: string;
   calendarMode?: "month" | "details";
   rows: MemberScheduleRow[];
+  client: SupabaseClient | null;
+  classmateToken: string;
   loading: boolean;
   scheduleError: string;
   authError?: string;
@@ -227,6 +242,8 @@ function SchedulePortal({
       >
         <MemberScheduleCalendar
           rows={rows}
+          client={client}
+          classmateToken={classmateToken}
           loading={loading}
           error={scheduleError}
           mode={calendarMode}
@@ -267,23 +284,73 @@ function SchedulePortal({
 
 function MemberScheduleCalendar({
   rows,
+  client,
+  classmateToken,
   loading,
   error,
   mode,
   onDateClick,
 }: {
   rows: MemberScheduleRow[];
+  client: SupabaseClient | null;
+  classmateToken: string;
   loading: boolean;
   error: string;
   mode: "month" | "details";
   onDateClick?: () => void;
 }) {
   const calendarDays = useMemo(() => getCalendarDays(AVAILABILITY_MONTH), []);
-  const [dialog, setDialog] = useState<{ label: string; ids: string[] } | null>(null);
+  const [dialog, setDialog] = useState<{ label: string; ids: string[]; date: string } | null>(null);
+  const [attendance, setAttendance] = useState<Record<string, AttendanceStatus>>({});
+  const [attendanceError, setAttendanceError] = useState("");
+  const [savingAttendance, setSavingAttendance] = useState(false);
   const selfRows = rows.filter((row) => row.is_self && row.status === "available");
   const detailDates = [...new Set(
     rows.filter((row) => row.status === "available").map((row) => row.available_date),
   )].sort();
+
+  useEffect(() => {
+    if (!client || !classmateToken) return;
+    let active = true;
+    const loadAttendance = async () => {
+      const result = await client.rpc("classmate_attendance", { p_token: classmateToken });
+      if (!active) return;
+      if (result.error) {
+        setAttendanceError("登下校状況を読み込めませんでした。");
+        return;
+      }
+      const next: Record<string, AttendanceStatus> = {};
+      ((result.data ?? []) as AttendanceRow[]).forEach((row) => {
+        next[`${row.attendance_date}:${row.student_id}`] = row.status;
+      });
+      setAttendance(next);
+      setAttendanceError("");
+    };
+    void loadAttendance();
+    return () => {
+      active = false;
+    };
+  }, [classmateToken, client]);
+
+  const advanceAttendance = async (date: string, id: string) => {
+    if (!client || !classmateToken || savingAttendance || id !== rows.find((row) => row.is_self)?.id) return;
+    if (date !== tokyoTodayKey()) return;
+    setSavingAttendance(true);
+    setAttendanceError("");
+    const result = await client.rpc("advance_classmate_attendance", {
+      p_token: classmateToken,
+      p_date: date,
+    });
+    if (result.error) {
+      setAttendanceError("登下校状況を保存できませんでした。");
+    } else {
+      setAttendance((current) => ({
+        ...current,
+        [`${date}:${id}`]: result.data as AttendanceStatus,
+      }));
+    }
+    setSavingAttendance(false);
+  };
 
   useEffect(() => {
     if (mode !== "details") return;
@@ -350,7 +417,7 @@ function MemberScheduleCalendar({
                 return (
                   <button type="button" className={`memberDetailGroup ${kind}Marker ${isSelf ? "self" : ""}`}
                     style={{ "--group-color": color } as React.CSSProperties}
-                    onClick={() => setDialog({ label, ids })} key={`${kind}-${name ?? "unset"}`}>
+                    onClick={() => setDialog({ label, ids, date })} key={`${kind}-${name ?? "unset"}`}>
                     <i aria-hidden="true" /><span>{label}</span>
                   </button>
                 );
@@ -365,7 +432,28 @@ function MemberScheduleCalendar({
           <button type="button" className="groupDialogClose" onClick={() => setDialog(null)} aria-label="閉じる"><X aria-hidden="true" /></button>
           <h2 id="group-dialog-title">{dialog.label}</h2>
           <p>参加できる人のID</p>
-          <div className="groupDialogIds">{dialog.ids.map((id) => <strong key={id}>{id}</strong>)}</div>
+          <div className="groupDialogIds">
+            {dialog.ids.map((id) => {
+              const attendanceStatus = attendance[`${dialog.date}:${id}`];
+              const isSelf = rows.some((row) => row.id === id && row.is_self);
+              const canTap = isSelf && dialog.date === tokyoTodayKey();
+              return canTap ? (
+                <button
+                  type="button"
+                  key={id}
+                  className={`attendanceId ${attendanceStatus ?? ""}`}
+                  onClick={() => void advanceAttendance(dialog.date, id)}
+                  disabled={savingAttendance}
+                  aria-label={`${id}：${attendanceLabel(attendanceStatus)}`}
+                >
+                  {id}
+                </button>
+              ) : (
+                <strong key={id} className={`attendanceId ${attendanceStatus ?? ""}`}>{id}</strong>
+              );
+            })}
+          </div>
+          {attendanceError && <p className="attendanceError" role="alert">{attendanceError}</p>}
         </section>
       </div>}
     </div>
@@ -658,6 +746,23 @@ function toDateKey(date: Date) {
     String(date.getMonth() + 1).padStart(2, "0"),
     String(date.getDate()).padStart(2, "0"),
   ].join("-");
+}
+
+function tokyoTodayKey() {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Tokyo",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(new Date());
+  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  return `${values.year}-${values.month}-${values.day}`;
+}
+
+function attendanceLabel(status?: AttendanceStatus) {
+  if (status === "arrived") return "登校済み";
+  if (status === "left") return "下校済み";
+  return "未登録";
 }
 
 function statusLabel(status?: AvailabilityStatus) {
