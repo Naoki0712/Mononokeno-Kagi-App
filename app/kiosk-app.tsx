@@ -2,8 +2,10 @@
 
 import Image from "next/image";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import { Contactless, LogOut } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import jsQR from "jsqr";
+import { LogOut, QrCode } from "lucide-react";
+import QRCode from "qrcode";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ScheduleScreen } from "./schedule-screen";
 
 const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
@@ -127,18 +129,12 @@ export function KioskApp({
       )}
 
       {portalAccess !== "loading" && portalAccess !== "none" && screen === "attendance" && (
-        <section className="subScreen touchAttendanceScreen" aria-labelledby="touch-attendance-title">
-          <BackTitle
-            id="touch-attendance-title"
-            title="タッチで入出場"
-            onBack={() => setScreen("home")}
-          />
-          <div className="touchAttendanceSetup">
-            <Contactless aria-hidden="true" />
-            <p>このスマホを入出場の受付端末として使用します。</p>
-            <strong>読み取り方式を設定中です</strong>
-          </div>
-        </section>
+        <AttendanceScreen
+          client={client}
+          token={classmateToken}
+          studentId={classmateId}
+          onBack={() => setScreen("home")}
+        />
       )}
 
       {portalAccess !== "loading" && portalAccess !== "none" && screen === "video" && (
@@ -262,10 +258,10 @@ function HomeScreen({
         type="button"
         className="homeTouchAttendance"
         onClick={() => onNavigate("attendance")}
-        aria-label="タッチで入出場を開く"
+        aria-label="QRコードで登下校を開く"
       >
-        <Contactless aria-hidden="true" />
-        <span>タッチで入出場</span>
+        <QrCode aria-hidden="true" />
+        <span>QRコードで登下校</span>
       </button>
 
       <button
@@ -278,6 +274,162 @@ function HomeScreen({
         <span>ログアウト</span>
       </button>
     </section>
+  );
+}
+
+type AttendanceMode = "arrived" | "left";
+
+function AttendanceScreen({
+  client,
+  token,
+  studentId,
+  onBack,
+}: {
+  client: SupabaseClient | null;
+  token: string;
+  studentId: string;
+  onBack: () => void;
+}) {
+  const isLeader = studentId === "2210" || studentId === "2211";
+  const [mode, setMode] = useState<AttendanceMode | null>(null);
+  const [showCode, setShowCode] = useState(false);
+
+  return (
+    <section className="subScreen touchAttendanceScreen" aria-labelledby="touch-attendance-title">
+      <BackTitle id="touch-attendance-title" title="QRコードで登下校" onBack={onBack} />
+      <div className="attendanceRoleActions">
+        {isLeader && (
+          <>
+            <button type="button" onClick={() => setMode("arrived")}>リーダー（登校）</button>
+            <button type="button" onClick={() => setMode("left")}>リーダー（下校）</button>
+          </>
+        )}
+        <button type="button" onClick={() => setShowCode(true)}>かざす</button>
+      </div>
+      {isLeader && mode && client && (
+        <LeaderScanner client={client} token={token} mode={mode} />
+      )}
+      {!mode && (
+        <div className="touchAttendanceSetup">
+          <QrCode aria-hidden="true" />
+          <p>{isLeader ? "役割を選択してください。" : "「かざす」を押してQRコードを表示してください。"}</p>
+        </div>
+      )}
+      {showCode && client && (
+        <MemberQrDialog client={client} token={token} onClose={() => setShowCode(false)} />
+      )}
+    </section>
+  );
+}
+
+function MemberQrDialog({ client, token, onClose }: { client: SupabaseClient; token: string; onClose: () => void }) {
+  const [imageUrl, setImageUrl] = useState("");
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    let active = true;
+    void client.rpc("classmate_attendance_qr", { p_token: token }).then(async ({ data, error: requestError }) => {
+      if (!active) return;
+      if (requestError || !data?.code) {
+        setError("QRコードを表示できませんでした。");
+        return;
+      }
+      const url = await QRCode.toDataURL(String(data.code), { width: 720, margin: 2, errorCorrectionLevel: "M" });
+      if (active) setImageUrl(url);
+    });
+    return () => { active = false; };
+  }, [client, token]);
+
+  return (
+    <div className="qrDialogBackdrop" role="presentation" onClick={onClose}>
+      <div className="qrOnlyDialog" role="dialog" aria-modal="true" aria-label="かざすQRコード" onClick={(event) => event.stopPropagation()}>
+        {imageUrl && <img src={imageUrl} alt="登下校用QRコード" />}
+        {!imageUrl && !error && <span>読み込み中…</span>}
+        {error && <span role="alert">{error}</span>}
+      </div>
+    </div>
+  );
+}
+
+function LeaderScanner({ client, token, mode }: { client: SupabaseClient; token: string; mode: AttendanceMode }) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const busyRef = useRef(false);
+  const lastCodeRef = useRef("");
+  const [scannedIds, setScannedIds] = useState<string[]>([]);
+  const [message, setMessage] = useState("");
+
+  useEffect(() => {
+    let stream: MediaStream | null = null;
+    let frame = 0;
+    let stopped = false;
+    const scan = async () => {
+      if (stopped) return;
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
+      if (video && canvas && video.readyState >= 2 && !busyRef.current) {
+        const width = video.videoWidth;
+        const height = video.videoHeight;
+        if (width && height) {
+          canvas.width = width;
+          canvas.height = height;
+          const context = canvas.getContext("2d", { willReadFrequently: true });
+          context?.drawImage(video, 0, 0, width, height);
+          const pixels = context?.getImageData(0, 0, width, height);
+          const result = pixels ? jsQR(pixels.data, width, height, { inversionAttempts: "dontInvert" }) : null;
+          if (result?.data && result.data !== lastCodeRef.current) {
+            busyRef.current = true;
+            lastCodeRef.current = result.data;
+            const response = await client.rpc("record_scanned_attendance", {
+              p_leader_token: token,
+              p_qr_code: result.data,
+              p_status: mode,
+            });
+            if (response.error || !response.data?.ok) {
+              setMessage("QRコードを読み取れませんでした。");
+            } else {
+              const id = String(response.data.student_id);
+              setScannedIds((ids) => ids.includes(id) ? ids : [id, ...ids]);
+              setMessage(`${id} を${mode === "arrived" ? "登校" : "下校"}にしました`);
+            }
+            window.setTimeout(() => {
+              busyRef.current = false;
+              lastCodeRef.current = "";
+            }, 1800);
+          }
+        }
+      }
+      frame = window.requestAnimationFrame(() => void scan());
+    };
+    void navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false })
+      .then((mediaStream) => {
+        stream = mediaStream;
+        if (videoRef.current) {
+          videoRef.current.srcObject = mediaStream;
+          void videoRef.current.play();
+        }
+        frame = window.requestAnimationFrame(() => void scan());
+      })
+      .catch(() => setMessage("カメラを使用できません。ブラウザのカメラ権限を許可してください。"));
+    return () => {
+      stopped = true;
+      window.cancelAnimationFrame(frame);
+      stream?.getTracks().forEach((track) => track.stop());
+    };
+  }, [client, mode, token]);
+
+  return (
+    <div className="leaderScanner">
+      <div className="leaderCamera">
+        <video ref={videoRef} playsInline muted aria-label="QRコード読み取りカメラ" />
+        <canvas ref={canvasRef} aria-hidden="true" />
+        <span>{mode === "arrived" ? "登校" : "下校"}QRコードをかざしてください</span>
+      </div>
+      <div className="leaderReadIds" aria-live="polite">
+        {message && <p>{message}</p>}
+        <div>{scannedIds.map((id) => <strong key={id}>{id}</strong>)}</div>
+      </div>
+    </div>
   );
 }
 

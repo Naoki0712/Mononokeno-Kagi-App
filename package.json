@@ -19,8 +19,10 @@
     "@supabase/supabase-js": "^2.110.7",
     "@types/three": "^0.185.1",
     "drizzle-orm": "0.45.2",
+    "jsqr": "^1.4.0",
     "lucide-react": "^1.24.0",
     "next": "16.2.6",
+    "qrcode": "^1.5.4",
     "react": "19.2.6",
     "react-dom": "19.2.6",
     "three": "^0.185.1"
@@ -29,6 +31,7 @@
     "@cloudflare/vite-plugin": "1.37.1",
     "@tailwindcss/postcss": "4.2.1",
     "@types/node": "22.19.19",
+    "@types/qrcode": "^1.5.6",
     "@types/react": "19.2.14",
     "@types/react-dom": "19.2.3",
     "@vitejs/plugin-react": "6.0.2",
