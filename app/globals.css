@@ -4900,3 +4900,101 @@ button:focus-visible {
   color: #ff767a;
   margin: 12px 0 0;
 }
+
+
+/* Touch attendance entry point and reception screen. */
+.homeTouchAttendance {
+  position: absolute;
+  bottom: 22px;
+  left: 27px;
+  z-index: 20;
+  display: inline-flex;
+  min-height: 0;
+  align-items: center;
+  gap: 18px;
+  border: 0;
+  padding: 4px 8px 4px 0;
+  background: transparent;
+  color: var(--white);
+  cursor: pointer;
+  font-size: var(--font-main);
+  line-height: 1;
+}
+
+.homeTouchAttendance svg {
+  width: 57px;
+  height: 44px;
+  flex: 0 0 57px;
+}
+
+.homeTouchAttendance:hover {
+  transform: translateY(-2px);
+}
+
+.homeLogout {
+  right: 27px;
+  left: auto;
+}
+
+.touchAttendanceSetup {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: grid;
+  width: min(720px, calc(100% - 40px));
+  justify-items: center;
+  gap: 22px;
+  text-align: center;
+  transform: translate(-50%, -45%);
+}
+
+.touchAttendanceSetup svg {
+  width: clamp(92px, 12vw, 160px);
+  height: clamp(92px, 12vw, 160px);
+}
+
+.touchAttendanceSetup p,
+.touchAttendanceSetup strong {
+  margin: 0;
+  font-size: var(--font-main);
+  font-weight: 400;
+}
+
+.touchAttendanceSetup strong {
+  color: rgb(255 255 255 / 68%);
+  font-size: var(--font-detail);
+}
+
+@media (max-width: 680px) {
+  .homeTouchAttendance {
+    bottom: 18px;
+    left: 16px;
+    width: 48px;
+    min-width: 48px;
+    height: 40px;
+    min-height: 40px;
+    justify-content: center;
+    gap: 0;
+    padding: 0;
+  }
+
+  .homeTouchAttendance > span {
+    position: absolute;
+    bottom: calc(100% + 6px);
+    left: 0;
+    font-size: 13px;
+    line-height: 1;
+    white-space: nowrap;
+  }
+
+  .homeTouchAttendance svg {
+    width: 45px;
+    height: 35px;
+    flex-basis: 45px;
+  }
+
+  .homeLogout {
+    right: 16px;
+    left: auto;
+  }
+}
