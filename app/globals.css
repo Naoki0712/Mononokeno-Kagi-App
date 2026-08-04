@@ -4123,6 +4123,29 @@ button:focus-visible {
   line-height: 1.45;
 }
 
+.manualBody p {
+  margin: 0 0 14px;
+}
+
+.manualSchedule {
+  color: var(--white);
+  font-size: 0.9em;
+}
+
+.manualQuizList {
+  margin: 16px 0 22px;
+  padding-left: 1.5em;
+}
+
+.manualQuizList li {
+  margin: 6px 0;
+}
+
+.manualNote {
+  max-width: 1120px;
+  font-size: 0.82em;
+}
+
 .availabilityScreen .combinedBackTitle {
   top: 10.5%;
   left: 2.7%;

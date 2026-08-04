@@ -45,17 +45,51 @@ const AVAILABILITY_MONTH = new Date(2026, 7, 1);
 const AVAILABILITY_SELECTABLE_START = "2026-08-18";
 const AVAILABILITY_SELECTABLE_END = "2026-08-31";
 const MANUALS = [
-  "🟢レイアウト班",
-  "🔵ギミック班",
-  "🟣装飾班",
-  "🔴小道具制作班",
-  "🟡物語班",
-  "🟧看板ベース",
-  "🟦妖怪ベース",
-  "🟥PR動画・ポスターベース",
-  "受付",
-  "スタッフ",
-  "宣伝",
+  {
+    title: "🟢レイアウト班",
+    schedule: "8/26（水）～",
+    description: "妖怪ベースが作成した妖怪のクイズをもとに各部屋の配置を決めます",
+  },
+  {
+    title: "🔵ギミック班",
+    schedule: "8/5（水）、8/26（水）～",
+    description: "機械的なギミック（動くもの）を作ります",
+  },
+  {
+    title: "🟣装飾班",
+    schedule: "8/5（水）、8/6（木）、8/26（水）～",
+    description: "モノを中心に部屋や通路の内装を考えます（一部妖怪の見た目を考えます）",
+  },
+  {
+    title: "🔴小道具制作係",
+    schedule: "8/26（水）～",
+    description: "ヒトを中心にスタッフのアイテム・お面や妖怪の装飾をします（妖怪の装飾は装飾班と協力）",
+  },
+  {
+    title: "🟡物語班",
+    schedule: "～8/6（木）",
+    description: "妖怪ベースが作成するにあたって各部屋のヘルプをします",
+  },
+  {
+    title: "🟧看板ベース",
+    schedule: "8/26（水）～",
+    description: "廊下で宣伝する看板を作ります",
+  },
+  {
+    title: "🟦妖怪ベース",
+    schedule: "8/5（水）、8/6（木）",
+    description: "妖怪にまつわるクイズを考えます",
+    quizItems: ["01：人魂（ひとだま）", "02：かまいたち", "03：空亡（そらなき）またはぬえ"],
+    notes: [
+      "自分の01～03のわりあては詳細の予定→🟦妖怪ベースをタップすると確認できます",
+      "不明点への対応、見た目のイメージ作り・確認についてはクラスLINEの「8/5（水）以降の全体の動き」を確認してください",
+    ],
+  },
+  {
+    title: "🟥PR動画・ポスターベース",
+    schedule: "（日程はDiscordを参照）",
+    description: "PR動画・廊下に貼るポスターを作ります",
+  },
 ] as const;
 
 export function ScheduleScreen({
@@ -499,9 +533,20 @@ function ManualList({ onBack }: { onBack: () => void }) {
       <ScreenTitle id="manual-title" title="マニュアル一覧" onBack={onBack} />
       <div className="manualList">
         {MANUALS.map((manual) => (
-          <details className="manualItem" key={manual}>
-            <summary>{manual}</summary>
-            <div className="manualBody">マニュアルの内容は準備中です。</div>
+          <details className="manualItem" key={manual.title}>
+            <summary>{manual.title}</summary>
+            <div className="manualBody">
+              <p className="manualSchedule">{manual.schedule}</p>
+              <p>{manual.description}</p>
+              {"quizItems" in manual && (
+                <ul className="manualQuizList">
+                  {manual.quizItems.map((item) => <li key={item}>{item}</li>)}
+                </ul>
+              )}
+              {"notes" in manual && manual.notes.map((note) => (
+                <p className="manualNote" key={note}>{note}</p>
+              ))}
+            </div>
           </details>
         ))}
       </div>
