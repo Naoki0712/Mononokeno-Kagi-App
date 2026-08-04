@@ -414,7 +414,7 @@ function MemberScheduleCalendar({
       {mode === "details" && <div className="memberDetailsList">
         {detailDates.map((date) => (
           <article className="memberDetailDay" id={`schedule-day-${date}`} key={date}>
-            <p>{formatJapaneseDateWithWeekday(date)} 13:30〜14:30</p>
+            <p>{formatJapaneseDateWithWeekday(date)} 14:00〜16:00</p>
             <div className="memberDetailGroups">
               {scheduleCategories(rows.filter((row) => row.available_date === date && row.status === "available")).map(({ kind, name, ids, isSelf }) => {
                 const label = kind === "group" ? groupLabel(name as GroupName | null) : baseLabel(name as BaseName);
@@ -602,7 +602,7 @@ function AvailabilityCalendar({
       </div>
 
       <div className="availabilityContent">
-        <p className="availabilityInstruction">8月18日〜31日のうち、13:30〜14:30に学校に来れる日を選んでください。なお、土休日は行いません。</p>
+        <p className="availabilityInstruction">8月18日〜31日のうち、14:00〜16:00に学校に来れる日を選んでください。なお、土休日は行いません。</p>
         {!editingEnabled && <strong className="editingClosed">編集受付は終了しました</strong>}
 
         {dataError && <p className="availabilityError" role="alert">{dataError}</p>}
