@@ -4991,11 +4991,60 @@ button:focus-visible {
 .leaderCamera { position: relative; min-height: 0; overflow: hidden; background: #080808; }
 .leaderCamera video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
 .leaderCamera canvas { display: none; }
-.leaderCamera span { position: absolute; bottom: 16px; left: 50%; padding: 8px 14px; border-radius: 999px; background: rgb(0 0 0 / 70%); transform: translateX(-50%); white-space: nowrap; }
 .leaderReadIds { overflow: auto; padding: 24px; border-top: 1px solid rgb(255 255 255 / 26%); }
 .leaderReadIds p { margin: 0 0 18px; color: rgb(255 255 255 / 68%); text-align: center; }
 .leaderReadIds > div { display: flex; flex-wrap: wrap; justify-content: center; gap: 16px 26px; }
 .leaderReadIds strong { color: #45d483; font-size: clamp(28px, 4vw, 52px); }
+
+.scanSuccess {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 6px solid #45d483;
+  background: linear-gradient(90deg, #ff861c 0 50%, #050505 50% 100%);
+  animation: scanSuccessIn 180ms ease-out both;
+}
+
+.scanSuccess strong {
+  position: absolute;
+  top: 24px;
+  left: calc(50% + 24px);
+  color: #45d483;
+  font-size: clamp(30px, 5vw, 72px);
+  font-weight: 400;
+}
+
+.scanSuccess img {
+  width: min(38%, 620px);
+  max-height: 72%;
+  margin-left: 50%;
+  object-fit: contain;
+  filter: brightness(0) saturate(100%) invert(72%) sepia(63%) saturate(522%) hue-rotate(96deg) brightness(91%) contrast(91%);
+  transform: scaleX(-1);
+}
+
+.leaderScanner.isDeparture .scanSuccess {
+  background: linear-gradient(90deg, #050505 0 50%, #ff861c 50% 100%);
+}
+
+.leaderScanner.isDeparture .scanSuccess strong {
+  right: calc(50% + 24px);
+  left: auto;
+}
+
+.leaderScanner.isDeparture .scanSuccess img {
+  margin-right: 50%;
+  margin-left: 0;
+  transform: none;
+}
+
+@keyframes scanSuccessIn {
+  from { opacity: 0; transform: scale(.97); }
+  to { opacity: 1; transform: scale(1); }
+}
 
 @media (orientation: landscape) and (min-width: 700px) {
   .leaderScanner {
@@ -5006,6 +5055,18 @@ button:focus-visible {
   .leaderReadIds {
     border-top: 0;
     border-left: 1px solid rgb(255 255 255 / 26%);
+  }
+
+  .leaderScanner.isDeparture .leaderReadIds {
+    grid-column: 1;
+    grid-row: 1;
+    border-right: 1px solid rgb(255 255 255 / 26%);
+    border-left: 0;
+  }
+
+  .leaderScanner.isDeparture .leaderCamera {
+    grid-column: 2;
+    grid-row: 1;
   }
 }
 
