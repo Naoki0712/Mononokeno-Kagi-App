@@ -758,3 +758,20 @@ function tokyoTodayKey() {
     timeZone: "Asia/Tokyo",
     year: "numeric",
     month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(new Date());
+  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  return `${values.year}-${values.month}-${values.day}`;
+}
+
+function attendanceLabel(status?: AttendanceStatus) {
+  if (status === "arrived") return "登校済み";
+  if (status === "left") return "下校済み";
+  return "未登録";
+}
+
+function statusLabel(status?: AvailabilityStatus) {
+  if (status === "available") return "参加できる";
+  if (status === "unavailable") return "参加できない";
+  return "未回答";
+}
