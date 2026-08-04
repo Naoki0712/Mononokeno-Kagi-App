@@ -279,6 +279,8 @@ function HomeScreen({
 
 type AttendanceMode = "arrived" | "left";
 
+const ATTENDANCE_READER_IDS = new Set(["2200", "2210", "2211", "2234", "2235", "2236"]);
+
 function AttendanceScreen({
   client,
   token,
@@ -290,9 +292,9 @@ function AttendanceScreen({
   studentId: string;
   onBack: () => void;
 }) {
-  const isLeader = studentId === "2210" || studentId === "2211";
+  const isLeader = ATTENDANCE_READER_IDS.has(studentId);
   const [mode, setMode] = useState<AttendanceMode | null>(null);
-  const [showCode, setShowCode] = useState(false);
+  const [showCode, setShowCode] = useState(!isLeader);
 
   return (
     <section className="subScreen touchAttendanceScreen" aria-labelledby="touch-attendance-title">
