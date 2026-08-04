@@ -365,18 +365,25 @@ function LeaderScanner({ client, token, mode }: { client: SupabaseClient; token:
 
   useEffect(() => {
     let stream: MediaStream | null = null;
-    let frame = 0;
+    let scanTimer = 0;
     let stopped = false;
+    const scanIntervalMs = 125;
+    const maxScanWidth = 720;
     const scan = async () => {
       if (stopped) return;
       const video = videoRef.current;
       const canvas = canvasRef.current;
       if (video && canvas && video.readyState >= 2 && !busyRef.current) {
-        const width = video.videoWidth;
-        const height = video.videoHeight;
+        const sourceWidth = video.videoWidth;
+        const sourceHeight = video.videoHeight;
+        const scale = sourceWidth > maxScanWidth ? maxScanWidth / sourceWidth : 1;
+        const width = Math.round(sourceWidth * scale);
+        const height = Math.round(sourceHeight * scale);
         if (width && height) {
-          canvas.width = width;
-          canvas.height = height;
+          if (canvas.width !== width || canvas.height !== height) {
+            canvas.width = width;
+            canvas.height = height;
+          }
           const context = canvas.getContext("2d", { willReadFrequently: true });
           context?.drawImage(video, 0, 0, width, height);
           const pixels = context?.getImageData(0, 0, width, height);
@@ -410,21 +417,29 @@ function LeaderScanner({ client, token, mode }: { client: SupabaseClient; token:
           }
         }
       }
-      frame = window.requestAnimationFrame(() => void scan());
+      scanTimer = window.setTimeout(() => void scan(), scanIntervalMs);
     };
-    void navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false })
+    void navigator.mediaDevices.getUserMedia({
+      video: {
+        facingMode: "user",
+        width: { ideal: 1280 },
+        height: { ideal: 720 },
+        frameRate: { ideal: 24, max: 30 },
+      },
+      audio: false,
+    })
       .then((mediaStream) => {
         stream = mediaStream;
         if (videoRef.current) {
           videoRef.current.srcObject = mediaStream;
           void videoRef.current.play();
         }
-        frame = window.requestAnimationFrame(() => void scan());
+        scanTimer = window.setTimeout(() => void scan(), scanIntervalMs);
       })
       .catch(() => setMessage("カメラを使用できません。ブラウザのカメラ権限を許可してください。"));
     return () => {
       stopped = true;
-      window.cancelAnimationFrame(frame);
+      window.clearTimeout(scanTimer);
       stream?.getTracks().forEach((track) => track.stop());
     };
   }, [client, mode, token]);

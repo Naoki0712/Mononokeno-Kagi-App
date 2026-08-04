@@ -5004,8 +5004,8 @@ button:focus-visible {
   align-items: center;
   justify-content: center;
   border: 6px solid #45d483;
-  background: linear-gradient(90deg, #ff861c 0 50%, #050505 50% 100%);
-  animation: scanSuccessIn 180ms ease-out both;
+  background: transparent;
+  pointer-events: none;
 }
 
 .scanSuccess strong {
@@ -5027,7 +5027,7 @@ button:focus-visible {
 }
 
 .leaderScanner.isDeparture .scanSuccess {
-  background: linear-gradient(90deg, #050505 0 50%, #ff861c 50% 100%);
+  border-color: #ff5c61;
 }
 
 .leaderScanner.isDeparture .scanSuccess strong {
@@ -5039,11 +5039,12 @@ button:focus-visible {
   margin-right: 50%;
   margin-left: 0;
   transform: none;
+  filter: brightness(0) saturate(100%) invert(48%) sepia(88%) saturate(1239%) hue-rotate(317deg) brightness(104%) contrast(101%);
 }
 
-@keyframes scanSuccessIn {
-  from { opacity: 0; transform: scale(.97); }
-  to { opacity: 1; transform: scale(1); }
+.leaderScanner.isDeparture .scanSuccess strong,
+.leaderScanner.isDeparture .leaderReadIds strong {
+  color: #ff5c61;
 }
 
 @media (orientation: landscape) and (min-width: 700px) {
