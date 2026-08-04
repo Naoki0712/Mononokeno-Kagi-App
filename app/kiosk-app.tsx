@@ -294,7 +294,7 @@ function AttendanceScreen({
 }) {
   const isLeader = ATTENDANCE_READER_IDS.has(studentId);
   const [mode, setMode] = useState<AttendanceMode | null>(null);
-  const [showCode, setShowCode] = useState(!isLeader);
+  const [showCode, setShowCode] = useState(false);
 
   return (
     <section className="subScreen touchAttendanceScreen" aria-labelledby="touch-attendance-title">
@@ -306,18 +306,21 @@ function AttendanceScreen({
             <button type="button" onClick={() => setMode("left")}>リーダー（下校）</button>
           </>
         )}
-        <button type="button" onClick={() => setShowCode(true)}>かざす</button>
+        {isLeader && <button type="button" onClick={() => setShowCode(true)}>かざす</button>}
       </div>
       {isLeader && mode && client && (
         <LeaderScanner client={client} token={token} mode={mode} />
       )}
-      {!mode && (
+      {isLeader && !mode && (
         <div className="touchAttendanceSetup">
           <QrCode aria-hidden="true" />
-          <p>{isLeader ? "役割を選択してください。" : "「かざす」を押してQRコードを表示してください。"}</p>
+          <p>役割を選択してください。</p>
         </div>
       )}
-      {showCode && client && (
+      {client && !isLeader && (
+        <MemberQrDialog client={client} token={token} onClose={onBack} />
+      )}
+      {client && isLeader && showCode && (
         <MemberQrDialog client={client} token={token} onClose={() => setShowCode(false)} />
       )}
     </section>
@@ -367,8 +370,10 @@ function LeaderScanner({ client, token, mode }: { client: SupabaseClient; token:
     let stream: MediaStream | null = null;
     let scanTimer = 0;
     let stopped = false;
+    let framesWithoutCode = 0;
     const scanIntervalMs = 125;
     const maxScanWidth = 720;
+    const releaseAfterMissingFrames = 3;
     const scan = async () => {
       if (stopped) return;
       const video = videoRef.current;
@@ -388,6 +393,15 @@ function LeaderScanner({ client, token, mode }: { client: SupabaseClient; token:
           context?.drawImage(video, 0, 0, width, height);
           const pixels = context?.getImageData(0, 0, width, height);
           const result = pixels ? jsQR(pixels.data, width, height, { inversionAttempts: "dontInvert" }) : null;
+          if (result?.data) {
+            framesWithoutCode = 0;
+          } else if (!busyRef.current && lastCodeRef.current) {
+            framesWithoutCode += 1;
+            if (framesWithoutCode >= releaseAfterMissingFrames) {
+              lastCodeRef.current = "";
+              framesWithoutCode = 0;
+            }
+          }
           if (result?.data && result.data !== lastCodeRef.current) {
             busyRef.current = true;
             lastCodeRef.current = result.data;
@@ -410,10 +424,7 @@ function LeaderScanner({ client, token, mode }: { client: SupabaseClient; token:
               }
               window.setTimeout(() => setSuccessId((current) => current === id ? "" : current), 1400);
             }
-            window.setTimeout(() => {
-              busyRef.current = false;
-              lastCodeRef.current = "";
-            }, 1800);
+            busyRef.current = false;
           }
         }
       }
