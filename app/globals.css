@@ -4997,6 +4997,18 @@ button:focus-visible {
 .leaderReadIds > div { display: flex; flex-wrap: wrap; justify-content: center; gap: 16px 26px; }
 .leaderReadIds strong { color: #45d483; font-size: clamp(28px, 4vw, 52px); }
 
+@media (orientation: landscape) and (min-width: 700px) {
+  .leaderScanner {
+    grid-template-rows: 1fr;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .leaderReadIds {
+    border-top: 0;
+    border-left: 1px solid rgb(255 255 255 / 26%);
+  }
+}
+
 .qrDialogBackdrop { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; background: rgb(0 0 0 / 78%); }
 .qrOnlyDialog { display: grid; width: min(84vw, 520px); aspect-ratio: 1; place-items: center; padding: 18px; background: white; color: black; }
 .qrOnlyDialog img { display: block; width: 100%; height: 100%; object-fit: contain; }
