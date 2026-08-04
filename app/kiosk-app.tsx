@@ -356,10 +356,12 @@ function MemberQrDialog({ client, token, onClose }: { client: SupabaseClient; to
 function LeaderScanner({ client, token, mode }: { client: SupabaseClient; token: string; mode: AttendanceMode }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const successAudioRef = useRef<HTMLAudioElement>(null);
   const busyRef = useRef(false);
   const lastCodeRef = useRef("");
   const [scannedIds, setScannedIds] = useState<string[]>([]);
   const [message, setMessage] = useState("");
+  const [successId, setSuccessId] = useState("");
 
   useEffect(() => {
     let stream: MediaStream | null = null;
@@ -393,6 +395,13 @@ function LeaderScanner({ client, token, mode }: { client: SupabaseClient; token:
               const id = String(response.data.student_id);
               setScannedIds((ids) => ids.includes(id) ? ids : [id, ...ids]);
               setMessage(`${id} を${mode === "arrived" ? "登校" : "下校"}にしました`);
+              setSuccessId(id);
+              const audio = successAudioRef.current;
+              if (audio) {
+                audio.currentTime = 0;
+                void audio.play().catch(() => undefined);
+              }
+              window.setTimeout(() => setSuccessId((current) => current === id ? "" : current), 1400);
             }
             window.setTimeout(() => {
               busyRef.current = false;
@@ -421,16 +430,22 @@ function LeaderScanner({ client, token, mode }: { client: SupabaseClient; token:
   }, [client, mode, token]);
 
   return (
-    <div className="leaderScanner">
+    <div className={`leaderScanner ${mode === "left" ? "isDeparture" : "isArrival"}`}>
       <div className="leaderCamera">
         <video ref={videoRef} playsInline muted aria-label="QRコード読み取りカメラ" />
         <canvas ref={canvasRef} aria-hidden="true" />
-        <span>{mode === "arrived" ? "登校" : "下校"}QRコードをかざしてください</span>
       </div>
       <div className="leaderReadIds" aria-live="polite">
         {message && <p>{message}</p>}
         <div>{scannedIds.map((id) => <strong key={id}>{id}</strong>)}</div>
       </div>
+      {successId && (
+        <div className="scanSuccess" aria-live="assertive">
+          <strong>{successId}</strong>
+          <img src={`${BASE_PATH}/assets/attendance-arrow.svg`} alt="" aria-hidden="true" />
+        </div>
+      )}
+      <audio ref={successAudioRef} src={`${BASE_PATH}/assets/attendance-success.mp3`} preload="auto" />
     </div>
   );
 }
