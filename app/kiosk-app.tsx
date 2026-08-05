@@ -471,7 +471,7 @@ function LeaderScanner({ client, token, mode }: { client: SupabaseClient; token:
           <img src={`${BASE_PATH}/assets/attendance-arrow.svg`} alt="" aria-hidden="true" />
         </div>
       )}
-      <audio ref={successAudioRef} src={`${BASE_PATH}/assets/attendance-success.mp3`} preload="auto" />
+      <audio ref={successAudioRef} src={`${BASE_PATH}/assets/attendance-success.mp3?v=20260805-tone2`} preload="auto" />
     </div>
   );
 }
