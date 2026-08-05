@@ -91,6 +91,20 @@ const MANUALS = [
     description: "PR動画・廊下に貼るポスターを作ります",
   },
 ] as const;
+const YOKAI_TEAMS = [
+  {
+    label: "01：人魂（ひとだま）",
+    ids: ["2201", "2205", "2206", "2208", "2212", "2214", "2223"],
+  },
+  {
+    label: "02：かまいたち",
+    ids: ["2209", "2215", "2216", "2217", "2218", "2221", "2229"],
+  },
+  {
+    label: "03：空亡（そらなき）またはぬえ",
+    ids: ["2202", "2204", "2227", "2228", "2231", "2232", "2233"],
+  },
+] as const;
 
 export function ScheduleScreen({
   onBack,
@@ -336,7 +350,12 @@ function MemberScheduleCalendar({
   onDateClick?: () => void;
 }) {
   const calendarDays = useMemo(() => getCalendarDays(AVAILABILITY_MONTH), []);
-  const [dialog, setDialog] = useState<{ label: string; ids: string[]; date: string } | null>(null);
+  const [dialog, setDialog] = useState<{
+    label: string;
+    ids: string[];
+    date: string;
+    sections?: Array<{ label: string; ids: string[] }>;
+  } | null>(null);
   const [attendance, setAttendance] = useState<Record<string, AttendanceStatus>>({});
   const [attendanceError, setAttendanceError] = useState("");
   const [savingAttendance, setSavingAttendance] = useState(false);
@@ -401,6 +420,27 @@ function MemberScheduleCalendar({
   if (loading) return <ScheduleState icon="loading" message="スケジュールを読み込み中" />;
   if (error) return <ScheduleState message={error} />;
 
+  const renderDialogId = (id: string) => {
+    if (!dialog) return null;
+    const attendanceStatus = attendance[`${dialog.date}:${id}`];
+    const isSelf = rows.some((row) => row.id === id && row.is_self);
+    const canTap = isSelf && dialog.date === tokyoTodayKey();
+    return canTap ? (
+      <button
+        type="button"
+        key={id}
+        className={`attendanceId ${attendanceStatus ?? ""}`}
+        onClick={() => void advanceAttendance(dialog.date, id)}
+        disabled={savingAttendance}
+        aria-label={`${id}：${attendanceLabel(attendanceStatus)}`}
+      >
+        {id}
+      </button>
+    ) : (
+      <strong key={id} className={`attendanceId ${attendanceStatus ?? ""}`}>{id}</strong>
+    );
+  };
+
   return (
     <div className={`memberCalendarLayout memberCalendar-${mode}`}>
       {mode === "month" && <div className="memberMonthPanel">
@@ -456,7 +496,12 @@ function MemberScheduleCalendar({
                 return (
                   <button type="button" className={`memberDetailGroup ${kind}Marker ${isSelf ? "self" : ""}`}
                     style={{ "--group-color": color } as React.CSSProperties}
-                    onClick={() => setDialog({ label, ids, date })} key={`${kind}-${name ?? "unset"}`}>
+                    onClick={() => setDialog({
+                      label,
+                      ids,
+                      date,
+                      sections: kind === "base" && name === "Yokai" ? yokaiTeamSections(ids) : undefined,
+                    })} key={`${kind}-${name ?? "unset"}`}>
                     <i aria-hidden="true" /><span>{label}</span>
                   </button>
                 );
@@ -471,27 +516,14 @@ function MemberScheduleCalendar({
           <button type="button" className="groupDialogClose" onClick={() => setDialog(null)} aria-label="閉じる"><X aria-hidden="true" /></button>
           <h2 id="group-dialog-title">{dialog.label}</h2>
           <p>参加できる人のID</p>
-          <div className="groupDialogIds">
-            {dialog.ids.map((id) => {
-              const attendanceStatus = attendance[`${dialog.date}:${id}`];
-              const isSelf = rows.some((row) => row.id === id && row.is_self);
-              const canTap = isSelf && dialog.date === tokyoTodayKey();
-              return canTap ? (
-                <button
-                  type="button"
-                  key={id}
-                  className={`attendanceId ${attendanceStatus ?? ""}`}
-                  onClick={() => void advanceAttendance(dialog.date, id)}
-                  disabled={savingAttendance}
-                  aria-label={`${id}：${attendanceLabel(attendanceStatus)}`}
-                >
-                  {id}
-                </button>
-              ) : (
-                <strong key={id} className={`attendanceId ${attendanceStatus ?? ""}`}>{id}</strong>
-              );
-            })}
-          </div>
+          {dialog.sections ? dialog.sections.map((section) => (
+            <section key={section.label}>
+              <p>{section.label}</p>
+              <div className="groupDialogIds">{section.ids.map(renderDialogId)}</div>
+            </section>
+          )) : (
+            <div className="groupDialogIds">{dialog.ids.map(renderDialogId)}</div>
+          )}
           {attendanceError && <p className="attendanceError" role="alert">{attendanceError}</p>}
         </section>
       </div>}
@@ -516,6 +548,16 @@ function scheduleCategories(rows: MemberScheduleRow[]) {
   return [...categories.values()]
     .map((value) => ({ ...value, ids: value.ids.sort() }))
     .sort((a, b) => categoryOrder(a.kind, a.name) - categoryOrder(b.kind, b.name));
+}
+
+function yokaiTeamSections(availableIds: string[]) {
+  const availableIdSet = new Set(availableIds);
+  return YOKAI_TEAMS
+    .map((team) => ({
+      label: team.label,
+      ids: team.ids.filter((id) => availableIdSet.has(id)),
+    }))
+    .filter((team) => team.ids.length > 0);
 }
 
 function ScheduleState({ message, icon }: { message: string; icon?: "loading" }) {
