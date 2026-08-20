@@ -115,7 +115,11 @@ export function KioskApp({
       )}
 
       {portalAccess !== "loading" && portalAccess !== "none" && screen === "home" && (
-        <HomeScreen onNavigate={setScreen} onLogout={() => void logoutPortal()} />
+        <HomeScreen
+          studentId={classmateId}
+          onNavigate={setScreen}
+          onLogout={() => void logoutPortal()}
+        />
       )}
 
       {portalAccess !== "loading" && portalAccess !== "none" && screen === "schedule" && (
@@ -218,9 +222,11 @@ function ClassmateLogin({
 }
 
 function HomeScreen({
+  studentId,
   onNavigate,
   onLogout,
 }: {
+  studentId: string;
   onNavigate: (screen: Screen) => void;
   onLogout: () => void;
 }) {
@@ -251,6 +257,14 @@ function HomeScreen({
           >
             マップを開く
           </button>
+          {ATTENDANCE_READER_IDS.has(studentId) && (
+            <a
+              className="actionButton secondaryAction"
+              href={`${BASE_PATH}/waiting/admin/`}
+            >
+              整理券を管理する
+            </a>
+          )}
         </div>
       </nav>
 
