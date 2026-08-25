@@ -1298,3 +1298,58 @@
 
   .adminHeader p {
     display: none;
+  }
+
+  .adminHeader h1 {
+    font-size: 25px;
+  }
+
+  .adminHeader > a {
+    padding: 10px 12px;
+    font-size: 12px;
+  }
+
+  .adminGateCard {
+    margin-top: 90px;
+  }
+
+  .adminToolbar {
+    margin-top: 4px;
+  }
+
+  .adminStats {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .adminStats > div {
+    min-height: 86px;
+    padding: 16px;
+  }
+
+  .adminStats strong {
+    font-size: 34px;
+  }
+
+  .adminGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .panelHeading {
+    align-items: flex-start;
+  }
+
+  .ticketScanner > div {
+    aspect-ratio: 4 / 3;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .overdueTicket { animation: none; color: #ff3b30; }
+  .loadingState span {
+    animation-duration: 1600ms;
+  }
+
+  .issueButton {
+    transition: none;
+  }
+}
