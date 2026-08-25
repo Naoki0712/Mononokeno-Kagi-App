@@ -7,10 +7,11 @@ import { LogOut, QrCode } from "lucide-react";
 import QRCode from "qrcode";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ScheduleScreen } from "./schedule-screen";
+import { WaitingConsole } from "./waiting-console";
 
 const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 
-type Screen = "home" | "schedule" | "attendance" | "video" | "map";
+type Screen = "home" | "schedule" | "attendance" | "video" | "map" | "waiting";
 
 type KioskAppProps = {
   supabaseUrl: string;
@@ -160,6 +161,16 @@ export function KioskApp({
           />
         </section>
       )}
+
+      {portalAccess !== "loading" && portalAccess !== "none" && screen === "waiting" && (
+        <WaitingConsole
+          supabaseUrl={supabaseUrl}
+          supabasePublishableKey={supabasePublishableKey}
+          classmateToken={classmateToken}
+          studentId={classmateId}
+          onBack={() => setScreen("home")}
+        />
+      )}
     </main>
   );
 }
@@ -258,12 +269,13 @@ function HomeScreen({
             マップを開く
           </button>
           {ATTENDANCE_READER_IDS.has(studentId) && (
-            <a
+            <button
+              type="button"
               className="actionButton secondaryAction"
-              href={`${BASE_PATH}/waiting/admin/`}
+              onClick={() => onNavigate("waiting")}
             >
               整理券を管理する
-            </a>
+            </button>
           )}
         </div>
       </nav>
