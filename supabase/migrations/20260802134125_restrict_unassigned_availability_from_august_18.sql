@@ -1,0 +1,1 @@
+-- Migration history marker. The schema change is represented by 20260802130000_restrict_unassigned_availability_from_august_18.sql.\n

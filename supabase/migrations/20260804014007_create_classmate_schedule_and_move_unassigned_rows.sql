@@ -1,0 +1,1 @@
+-- Migration history marker for the already-applied production migration.\n

@@ -1,0 +1,1 @@
+-- Migration history marker. The schema change is represented by 20260804000000_add_daily_attendance_tracking.sql.\n
