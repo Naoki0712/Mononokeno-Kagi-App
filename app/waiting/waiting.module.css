@@ -437,6 +437,285 @@
   font-family: Arial, "Yu Gothic", sans-serif;
 }
 
+.queueConsole {
+  width: min(1180px, 100%);
+  min-height: 720px;
+  margin: -94px auto -42px;
+  padding: 10px 18px 18px;
+  background: #000;
+  color: #fff;
+  font-family: Helvetica, Arial, "Yu Gothic", sans-serif;
+}
+
+.consoleTopbar,
+.consoleNav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.consoleTopbar {
+  font-size: 31px;
+  font-variant-numeric: tabular-nums;
+}
+
+.consoleNav {
+  min-height: 78px;
+}
+
+.consoleNav > a {
+  color: #fff;
+  font-size: 29px;
+  text-decoration: none;
+}
+
+.screenSwitch {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  width: 146px;
+  border-radius: 999px;
+  padding: 6px;
+  background: #292929;
+  font-size: 28px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.screenSwitch button {
+  display: grid;
+  min-height: 39px;
+  place-items: center;
+  border-radius: 999px;
+  border: 0;
+  background: transparent;
+  color: #fff;
+  cursor: pointer;
+  font: inherit;
+  line-height: 1;
+  text-decoration: none;
+}
+
+.screenSwitch .activeScreen {
+  background: #fff;
+  color: #000;
+}
+
+.visitorCallBoard {
+  display: grid;
+  grid-template-columns: 1.05fr 1fr;
+  min-height: 535px;
+  gap: 30px;
+}
+
+.callingPanel {
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  background: #009b50;
+  text-align: center;
+}
+
+.callingPanel h2,
+.callingPanel h3,
+.callingPanel p { margin: 0; }
+.callingPanel h2 { font-size: 42px; font-weight: 400; }
+.callingPanel strong { font-size: clamp(150px, 25vw, 240px); line-height: .9; }
+.callingPanel > p { font-size: 39px; font-weight: 700; }
+.callingPanel h3 { font-size: 35px; font-weight: 400; }
+.callingPanel h3 + p { max-width: 220px; font-size: 25px; line-height: 1.1; }
+.receptionArrow { height: 105px; font-size: 145px; font-weight: 700; line-height: .8; }
+
+.callLists {
+  display: grid;
+  grid-template-rows: 1fr 1fr;
+}
+
+.callLists section {
+  align-content: center;
+  border-bottom: 6px solid #ff6a00;
+}
+
+.callLists section:last-child { border-color: #aaa; }
+.callLists h2,
+.callLists p { margin: 0; }
+.callLists h2 { font-size: 34px; font-weight: 400; }
+.callLists p { font-size: 21px; font-weight: 700; }
+.callLists section > div { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 14px; }
+.callLists strong { font-size: 45px; }
+
+.consoleMessage {
+  position: fixed;
+  right: 24px;
+  bottom: 20px;
+  z-index: 4;
+  border-radius: 10px;
+  padding: 10px 14px;
+  background: #fff;
+  color: #000;
+  font-size: 14px;
+}
+
+.consoleColumns {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 1fr);
+  gap: 18px;
+}
+
+.queueBoard {
+  min-width: 0;
+}
+
+.ticketLane {
+  margin-bottom: 18px;
+}
+
+.laneHeading h2,
+.laneHeading p,
+.waitingHeading h2,
+.waitingHeading p,
+.scriptPlaceholder h2,
+.scriptPlaceholder p {
+  margin: 0;
+}
+
+.laneHeading h2,
+.waitingHeading h2,
+.scriptPlaceholder h2 {
+  font-size: 29px;
+  font-weight: 400;
+}
+
+.laneHeading p,
+.waitingHeading p {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.ticketStrip {
+  display: flex;
+  min-height: 76px;
+  gap: 14px;
+  align-items: stretch;
+  overflow-x: auto;
+  border: 3px solid #aaa;
+  border-radius: 16px;
+  padding: 9px 12px;
+  scrollbar-color: #aaa transparent;
+  scrollbar-width: thin;
+}
+
+.lane_called .ticketStrip {
+  border-color: #00c977;
+}
+
+.lane_waiting .ticketStrip {
+  border-color: #ff6a00;
+}
+
+.queueTicket {
+  display: grid;
+  min-width: 92px;
+  place-content: center;
+  border: 0;
+  padding: 0 6px;
+  background: transparent;
+  color: #fff;
+  cursor: grab;
+  font-family: Helvetica, Arial, sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+
+.queueTicket:active {
+  cursor: grabbing;
+}
+
+.queueTicket > span {
+  font-size: 43px;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.queueTicket b {
+  margin-right: 2px;
+  font-size: 22px;
+  font-weight: 400;
+}
+
+.queueTicket small {
+  margin-top: 5px;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.manualTicket > span {
+  text-decoration: underline 2px;
+  text-underline-offset: 7px;
+}
+
+.overdueTicket {
+  color: #ff3b30;
+  animation: waitingOverdueBlink 1s steps(1, end) infinite;
+}
+
+@keyframes waitingOverdueBlink {
+  50% { opacity: 0.22; }
+}
+
+.emptyLane {
+  display: grid;
+  place-items: center;
+  color: #777;
+  font-size: 16px;
+}
+
+.waitingHeading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.waitingHeading button {
+  border: 0;
+  border-radius: 5px;
+  padding: 7px 12px;
+  background: #fff;
+  color: #000;
+  cursor: pointer;
+  font: 20px/1 Helvetica, Arial, sans-serif;
+}
+
+.scriptPlaceholder {
+  min-height: 500px;
+  padding: 8px 0 0;
+  background: url("/assets/mononoke-no-kagi.png") center 48% / min(70%, 430px) auto no-repeat;
+}
+
+.scriptPlaceholder p {
+  margin-top: 8px;
+  color: #777;
+  font-size: 16px;
+}
+
+.consoleLogout {
+  position: absolute;
+  right: 22px;
+  bottom: 8px;
+  border: 0;
+  border-bottom: 1px solid #777;
+  background: transparent;
+  color: #888;
+  cursor: pointer;
+  font: 12px/1.4 Helvetica, Arial, sans-serif;
+}
+
+@media (max-width: 850px) {
+  .consoleColumns { grid-template-columns: minmax(0, 1fr) 34%; }
+  .queueTicket { min-width: 82px; }
+  .queueTicket > span { font-size: 38px; }
+}
+
 .adminHeader {
   position: absolute;
   top: 22px;
@@ -1019,57 +1298,3 @@
 
   .adminHeader p {
     display: none;
-  }
-
-  .adminHeader h1 {
-    font-size: 25px;
-  }
-
-  .adminHeader > a {
-    padding: 10px 12px;
-    font-size: 12px;
-  }
-
-  .adminGateCard {
-    margin-top: 90px;
-  }
-
-  .adminToolbar {
-    margin-top: 4px;
-  }
-
-  .adminStats {
-    grid-template-columns: 1fr 1fr;
-  }
-
-  .adminStats > div {
-    min-height: 86px;
-    padding: 16px;
-  }
-
-  .adminStats strong {
-    font-size: 34px;
-  }
-
-  .adminGrid {
-    grid-template-columns: 1fr;
-  }
-
-  .panelHeading {
-    align-items: flex-start;
-  }
-
-  .ticketScanner > div {
-    aspect-ratio: 4 / 3;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .loadingState span {
-    animation-duration: 1600ms;
-  }
-
-  .issueButton {
-    transition: none;
-  }
-}
