@@ -10,7 +10,7 @@ import styles from "./waiting.module.css";
 const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 const CLASSMATE_SESSION_KEY = "mononoke-classmate-session";
 
-type AdminTicketStatus = "waiting" | "called" | "redeemed" | "expired" | "cancelled";
+type AdminTicketStatus = "waiting" | "called" | "pending" | "redeemed" | "expired" | "cancelled";
 
 type AdminTicket = {
   ticket_number: number;
@@ -19,6 +19,8 @@ type AdminTicket = {
   scheduled_at: string;
   called_at: string | null;
   redeemed_at: string | null;
+  pending_at: string | null;
+  manually_issued: boolean;
 };
 
 type AdminSnapshot = {
@@ -65,6 +67,8 @@ export function WaitingAdmin({
   const [busy, setBusy] = useState("");
   const [message, setMessage] = useState("");
   const [scannerOpen, setScannerOpen] = useState(false);
+  const [now, setNow] = useState(() => Date.now());
+  const [consoleScreen, setConsoleScreen] = useState<1 | 2>(2);
 
   const refresh = useCallback(
     async (sessionToken: string, quiet = false) => {
@@ -113,6 +117,45 @@ export function WaitingAdmin({
     const timer = window.setInterval(() => void refresh(token, true), 10000);
     return () => window.clearInterval(timer);
   }, [phase, refresh, token]);
+
+  useEffect(() => {
+    if (phase !== "dashboard") return;
+    const timer = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, [phase]);
+
+  const moveTicket = async (ticketNumber: number, status: "waiting" | "called" | "pending") => {
+    if (!client || !token || busy) return;
+    setBusy(`move-${ticketNumber}`);
+    setMessage("");
+    const { data, error } = await client.rpc("waiting_admin_move_ticket", {
+      p_classmate_token: token,
+      p_ticket_number: ticketNumber,
+      p_status: status,
+    });
+    setBusy("");
+    if (error || !data?.ok) {
+      setMessage(data?.reason === "called_slot_occupied" ? "呼び出し中に置ける番号は1つまでです。" : "番号を移動できませんでした。");
+      return;
+    }
+    await refresh(token, true);
+  };
+
+  const issueManual = async () => {
+    if (!client || !token || busy) return;
+    setBusy("manual");
+    setMessage("");
+    const { data, error } = await client.rpc("waiting_admin_issue_manual", {
+      p_classmate_token: token,
+    });
+    setBusy("");
+    if (error || !data?.ok) {
+      setMessage("整理券を手動発行できませんでした。");
+      return;
+    }
+    setMessage(`${Number(data.ticket_number)}番を手動で追加しました。`);
+    await refresh(token, true);
+  };
 
   const saveSettings = async () => {
     if (!client || !token) return;
@@ -185,7 +228,7 @@ export function WaitingAdmin({
 
   return (
     <main className={`${styles.waitingPage} ${styles.adminPage} waitingViewport`}>
-      <header className={styles.adminHeader}>
+      {phase !== "dashboard" && <header className={styles.adminHeader}>
         <div>
           <Image
             src={`${BASE_PATH}/assets/mononoke-no-kagi.png`}
@@ -201,7 +244,7 @@ export function WaitingAdmin({
           </div>
         </div>
         <Link href="/">運営アプリへ戻る</Link>
-      </header>
+      </header>}
 
       {phase === "loading" && <AdminLoading />}
       {phase === "login" && client && (
@@ -228,129 +271,35 @@ export function WaitingAdmin({
         </section>
       )}
       {phase === "dashboard" && snapshot && (
-        <section className={styles.adminDashboard}>
-          <div className={styles.adminToolbar}>
-            <p>ID {snapshot.admin_student_id}</p>
-            <button type="button" onClick={logout}>ログアウト</button>
+        <section className={styles.queueConsole}>
+          <div className={styles.consoleTopbar}>
+            <time>{formatConsoleDate(now)}</time>
+            <time>{formatConsoleClock(now)}</time>
           </div>
-
-          {message && <div className={styles.adminMessage} role="status">{message}</div>}
-
-          <div className={styles.adminStats}>
-            <Stat label="発行済み" value={snapshot.last_issued_number} />
-            <Stat label="待機中" value={snapshot.waiting_count} />
-            <Stat label="呼出中" value={snapshot.called_count} />
-            <Stat label="受付済み" value={snapshot.redeemed_count} />
-          </div>
-
-          <div className={styles.adminGrid}>
-            <section className={styles.adminPanel}>
-              <div className={styles.panelHeading}>
-                <div>
-                  <p>ISSUING</p>
-                  <h2>発行設定</h2>
-                </div>
-                <span className={draftEnabled ? styles.liveBadge : styles.stoppedBadge}>
-                  {draftEnabled ? "発行中" : "停止中"}
-                </span>
-              </div>
-              <label className={styles.toggleRow}>
-                <span>整理券を発行する</span>
-                <input
-                  type="checkbox"
-                  checked={draftEnabled}
-                  onChange={(event) => {
-                    setDraftEnabled(event.target.checked);
-                    settingsDirtyRef.current = true;
-                  }}
-                />
-              </label>
-              <label className={styles.waitInput}>
-                <span>案内する待ち時間</span>
-                <span>
-                  <input
-                    type="number"
-                    min={1}
-                    max={240}
-                    value={draftWait}
-                    onChange={(event) => {
-                      setDraftWait(Math.min(240, Math.max(1, Number(event.target.value) || 1)));
-                      settingsDirtyRef.current = true;
-                    }}
-                  />
-                  分
-                </span>
-              </label>
-              <button
-                className={styles.primaryAdminButton}
-                type="button"
-                disabled={busy === "settings"}
-                onClick={() => void saveSettings()}
-              >
-                {busy === "settings" ? "保存中…" : "設定を保存"}
-              </button>
-            </section>
-
-            <section className={styles.adminPanel}>
-              <div className={styles.panelHeading}>
-                <div>
-                  <p>CALL</p>
-                  <h2>番号を呼び出す</h2>
-                </div>
-              </div>
-              <p className={styles.nextNumberLabel}>次の番号</p>
-              <strong className={styles.nextNumber}>
-                {snapshot.next_waiting_number ?? "—"}
-              </strong>
-              <button
-                className={styles.callButton}
-                type="button"
-                disabled={busy === "call" || snapshot.next_waiting_number === null}
-                onClick={() => void callNext()}
-              >
-                {busy === "call" ? "処理中…" : "次の番号を呼び出す"}
-              </button>
-            </section>
-          </div>
-
-          <section className={styles.adminPanel}>
-            <div className={styles.panelHeading}>
-              <div>
-                <p>RECEPTION</p>
-                <h2>受付QR確認</h2>
-              </div>
-              <button
-                className={styles.secondaryAdminButton}
-                type="button"
-                onClick={() => setScannerOpen((open) => !open)}
-              >
-                {scannerOpen ? "カメラを閉じる" : "カメラを開く"}
-              </button>
+          <div className={styles.consoleNav}>
+            <Link href="/">‹ 受付のシステムを使う</Link>
+            <div className={styles.screenSwitch} aria-label="表示画面の切り替え">
+              <button type="button" className={consoleScreen === 1 ? styles.activeScreen : ""} onClick={() => setConsoleScreen(1)} aria-label="来場者側の画面">1</button>
+              <button type="button" className={consoleScreen === 2 ? styles.activeScreen : ""} onClick={() => setConsoleScreen(2)} aria-label="受付スタッフ側の画面">2</button>
             </div>
-            {scannerOpen && (
-              <TicketScanner
-                busy={busy === "scan"}
-                onRead={redeemQr}
-              />
-            )}
-          </section>
-
-          <section className={styles.adminPanel}>
-            <div className={styles.panelHeading}>
-              <div>
-                <p>TICKETS</p>
-                <h2>本日の整理券</h2>
+          </div>
+          {message && <div className={styles.consoleMessage} role="status">{message}</div>}
+          {consoleScreen === 1 ? <VisitorCallBoard tickets={snapshot.tickets} /> : <div className={styles.consoleColumns}>
+            <div className={styles.queueBoard}>
+              <TicketLane title="保留中" subtitle="Pending" status="pending" tickets={snapshot.tickets} now={now} onMove={moveTicket} />
+              <TicketLane title="呼び出し中（1つだけ選択可）" subtitle="Calling" status="called" tickets={snapshot.tickets} now={now} onMove={moveTicket} />
+              <div className={styles.waitingHeading}>
+                <div><h2>呼び出し前</h2><p>Up next</p></div>
+                <button type="button" onClick={() => void issueManual()} disabled={busy === "manual"}>✋ 手動で追加</button>
               </div>
-              <button
-                className={styles.secondaryAdminButton}
-                type="button"
-                onClick={() => void refresh(token, true)}
-              >
-                更新
-              </button>
+              <TicketLane title="" subtitle="" status="waiting" tickets={snapshot.tickets} now={now} onMove={moveTicket} hideHeading />
             </div>
-            <TicketTable tickets={snapshot.tickets} />
-          </section>
+            <aside className={styles.scriptPlaceholder}>
+              <h2>受付用スクリプト</h2>
+              <p>後ほど追加します</p>
+            </aside>
+          </div>}
+          <button className={styles.consoleLogout} type="button" onClick={logout}>ID {snapshot.admin_student_id}・ログアウト</button>
         </section>
       )}
     </main>
@@ -419,6 +368,97 @@ function AdminLogin({
       </form>
     </section>
   );
+}
+
+function TicketLane({
+  title,
+  subtitle,
+  status,
+  tickets,
+  now,
+  onMove,
+  hideHeading = false,
+}: {
+  title: string;
+  subtitle: string;
+  status: "waiting" | "called" | "pending";
+  tickets: AdminTicket[];
+  now: number;
+  onMove: (ticketNumber: number, status: "waiting" | "called" | "pending") => Promise<void>;
+  hideHeading?: boolean;
+}) {
+  const laneTickets = tickets.filter((ticket) => ticket.status === status);
+  return (
+    <section
+      className={`${styles.ticketLane} ${styles[`lane_${status}`]}`}
+      onDragOver={(event) => event.preventDefault()}
+      onDrop={(event) => {
+        event.preventDefault();
+        const ticketNumber = Number(event.dataTransfer.getData("text/plain"));
+        if (ticketNumber) void onMove(ticketNumber, status);
+      }}
+      aria-label={`${title || "呼び出し前"}の番号`}
+    >
+      {!hideHeading && <div className={styles.laneHeading}><h2>{title}</h2><p>{subtitle}</p></div>}
+      <div className={styles.ticketStrip}>
+        {laneTickets.length === 0 && <span className={styles.emptyLane}>番号なし</span>}
+        {laneTickets.map((ticket) => {
+          const elapsed = ticket.pending_at ? Math.max(0, now - new Date(ticket.pending_at).getTime()) : 0;
+          const overdue = status === "pending" && elapsed >= 15 * 60 * 1000;
+          return (
+            <button
+              type="button"
+              draggable
+              key={ticket.ticket_number}
+              className={`${styles.queueTicket} ${ticket.manually_issued ? styles.manualTicket : ""} ${overdue ? styles.overdueTicket : ""}`}
+              onDragStart={(event) => event.dataTransfer.setData("text/plain", String(ticket.ticket_number))}
+              title="ドラッグして状態を変更"
+            >
+              <span>{ticket.manually_issued && <b aria-label="手動発券">✋</b>}{ticket.ticket_number}</span>
+              {status === "pending" && <small>{formatElapsed(elapsed)}</small>}
+            </button>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+function VisitorCallBoard({ tickets }: { tickets: AdminTicket[] }) {
+  const called = tickets.find((ticket) => ticket.status === "called");
+  const waiting = tickets.filter((ticket) => ticket.status === "waiting").slice(0, 6);
+  const pending = tickets.filter((ticket) => ticket.status === "pending").slice(0, 4);
+  return (
+    <div className={styles.visitorCallBoard}>
+      <section className={styles.callingPanel}>
+        <h2>呼び出し中</h2>
+        <strong>{called?.ticket_number ?? "—"}</strong>
+        <p lang="en">Calling</p>
+        <div className={styles.receptionArrow}>↑</div>
+        <h3>受付へ</h3>
+        <p lang="en">Go to the Reception</p>
+      </section>
+      <div className={styles.callLists}>
+        <section><h2>呼び出し前</h2><p lang="en">Up next</p><div>{waiting.map((ticket) => <strong key={ticket.ticket_number}>{ticket.ticket_number}</strong>)}</div></section>
+        <section><h2>保留中</h2><p lang="en">Pending</p><div>{pending.map((ticket) => <strong key={ticket.ticket_number}>{ticket.ticket_number}</strong>)}</div></section>
+      </div>
+    </div>
+  );
+}
+
+function formatElapsed(milliseconds: number) {
+  const seconds = Math.floor(milliseconds / 1000);
+  const minutes = Math.floor(seconds / 60);
+  return `${String(minutes).padStart(2, "0")}:${String(seconds % 60).padStart(2, "0")}`;
+}
+
+function formatConsoleDate(now: number) {
+  const parts = new Intl.DateTimeFormat("ja-JP", { timeZone: "Asia/Tokyo", month: "numeric", day: "numeric" }).formatToParts(now);
+  return `${parts.find((part) => part.type === "month")?.value}月${parts.find((part) => part.type === "day")?.value}日`;
+}
+
+function formatConsoleClock(now: number) {
+  return new Intl.DateTimeFormat("ja-JP", { timeZone: "Asia/Tokyo", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(now);
 }
 
 function AdminLoading() {
