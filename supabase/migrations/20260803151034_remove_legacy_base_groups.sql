@@ -1,0 +1,1 @@
+-- Migration history marker. The schema change is represented by 20260804143000_remove_legacy_base_groups.sql.\n
