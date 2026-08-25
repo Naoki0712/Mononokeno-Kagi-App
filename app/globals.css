@@ -2132,6 +2132,241 @@ button:focus-visible {
   }
 }
 
+/* Integrated waiting console */
+.waitingConsoleScreen {
+  font-family: var(--font-cine);
+}
+
+.waitingConsoleHeader {
+  top: 10.5%;
+}
+
+.waitingViewSwitch {
+  position: absolute;
+  top: 10.2%;
+  right: 28px;
+  z-index: 30;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  width: clamp(118px, 10vw, 154px);
+  border-radius: 999px;
+  padding: 5px;
+  background: #292929;
+}
+
+.waitingViewSwitch button {
+  display: grid;
+  min-height: clamp(35px, 3vw, 46px);
+  place-items: center;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--white);
+  cursor: pointer;
+  font-family: Helvetica, Arial, sans-serif;
+  font-size: var(--font-detail);
+  font-weight: 700;
+  line-height: 1;
+}
+
+.waitingViewSwitch .active {
+  background: var(--white);
+  color: var(--black);
+}
+
+.waitingVisitorBoard,
+.waitingStaffBoard {
+  position: absolute;
+  top: 18.5%;
+  left: 50%;
+  z-index: 4;
+  width: min(92vw, calc((100svh - 200px) * 1.6059));
+  max-width: 1365px;
+  aspect-ratio: 1365 / 850;
+  transform: translateX(-50%);
+}
+
+.waitingVisitorBoard {
+  display: grid;
+  grid-template-columns: 700fr 665fr;
+  overflow: hidden;
+}
+
+.waitingSvgPanel {
+  position: relative;
+  min-width: 0;
+  height: 100%;
+}
+
+.waitingSvgPanel > img {
+  object-fit: fill;
+}
+
+.waitingCalledNumber {
+  position: absolute;
+  top: 23%;
+  left: 50%;
+  z-index: 2;
+  color: #fff;
+  font-family: Helvetica, Arial, sans-serif;
+  font-size: clamp(100px, 15vw, 230px);
+  font-weight: 700;
+  line-height: 1;
+  transform: translateX(-50%);
+}
+
+.visitorUpcomingNumbers,
+.visitorPendingNumbers {
+  position: absolute;
+  left: 4%;
+  z-index: 2;
+  display: grid;
+  width: 92%;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4% 8%;
+  color: #fff;
+  font-family: Helvetica, Arial, sans-serif;
+}
+
+.visitorUpcomingNumbers { top: 14%; }
+.visitorPendingNumbers { top: 64%; }
+
+.visitorUpcomingNumbers strong,
+.visitorPendingNumbers strong {
+  font-size: clamp(39px, 5.3vw, 82px);
+  line-height: 1;
+}
+
+.waitingStaffBoard {
+  display: grid;
+  grid-template-columns: minmax(0, 1.04fr) minmax(0, .96fr);
+  gap: clamp(24px, 3vw, 54px);
+}
+
+.waitingStaffLanes {
+  min-width: 0;
+}
+
+.waitingLane { margin-bottom: clamp(14px, 1.6vh, 24px); }
+
+.waitingLaneTitle {
+  position: relative;
+  display: flex;
+  align-items: end;
+  gap: 10px;
+}
+
+.waitingLaneTitle h2,
+.waitingLaneTitle p,
+.waitingScript h2,
+.waitingScript p { margin: 0; }
+
+.waitingLaneTitle h2,
+.waitingScript h2 {
+  font-size: var(--font-main);
+  font-weight: 400;
+  line-height: 1.05;
+}
+
+.waitingLaneTitle p {
+  font-family: Helvetica, Arial, sans-serif;
+  font-size: var(--font-detail);
+  font-weight: 700;
+  line-height: 1;
+}
+
+.waitingUpcomingTitle button {
+  margin-left: auto;
+  border: 0;
+  border-radius: 5px;
+  padding: 7px 12px;
+  background: var(--white);
+  color: var(--black);
+  cursor: pointer;
+  font-family: var(--font-cine);
+  font-size: var(--font-detail);
+}
+
+.waitingTicketStrip {
+  display: flex;
+  min-height: clamp(78px, 10vh, 112px);
+  gap: 14px;
+  align-items: stretch;
+  overflow-x: auto;
+  border: 3px solid #a6a6a6;
+  border-radius: 16px;
+  padding: 10px 12px;
+  scrollbar-width: thin;
+}
+
+.waitingLane-called .waitingTicketStrip { border-color: #00bf63; }
+.waitingLane-waiting .waitingTicketStrip { border-color: #ff751f; }
+
+.waitingTicket {
+  display: grid;
+  min-width: clamp(78px, 7vw, 110px);
+  place-content: center;
+  border: 0;
+  background: transparent;
+  color: #fff;
+  cursor: grab;
+  font-family: Helvetica, Arial, sans-serif;
+}
+
+.waitingTicket strong { font-size: var(--font-role); line-height: .9; white-space: nowrap; }
+.waitingTicket strong span { font-size: .36em; }
+.waitingTicket small { margin-top: 8px; font-size: var(--font-detail); font-weight: 700; }
+.waitingTicket.manual strong { text-decoration: underline 2px; text-underline-offset: 7px; }
+.waitingTicket.overdue { color: #ff3b30; animation: waitingBlink 1s steps(1, end) infinite; }
+@keyframes waitingBlink { 50% { opacity: .22; } }
+
+.waitingEmptyLane {
+  display: grid;
+  place-items: center;
+  color: #8b8b8b;
+  font-size: var(--font-detail);
+}
+
+.waitingScript {
+  min-width: 0;
+  padding-top: 3px;
+}
+
+.waitingScript p {
+  margin-top: 7px;
+  color: #777;
+  font-size: var(--font-detail);
+}
+
+.waitingConsoleMessage,
+.waitingConsoleLoading,
+.waitingConsoleIdentity {
+  position: absolute;
+  z-index: 40;
+  margin: 0;
+  font-size: var(--font-detail);
+}
+
+.waitingConsoleMessage { right: 28px; bottom: 26px; }
+.waitingConsoleLoading { top: 50%; left: 50%; transform: translate(-50%, -50%); }
+.waitingConsoleIdentity { right: 28px; bottom: 20px; color: #777; }
+
+@media (max-aspect-ratio: 1 / 1) {
+  .waitingVisitorBoard,
+  .waitingStaffBoard {
+    top: 17%;
+    width: min(94vw, 900px);
+  }
+
+  .waitingStaffBoard { grid-template-columns: 1fr; aspect-ratio: auto; }
+  .waitingScript { display: none; }
+  .waitingConsoleHeader .backTitle h1 { font-size: var(--font-main) !important; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .waitingTicket.overdue { animation: none; }
+}
+
 @media (max-height: 720px) and (min-width: 681px) {
   .homeBrand,
   .subBrand {
