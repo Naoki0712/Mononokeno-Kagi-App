@@ -483,6 +483,7 @@ function TicketTable({ tickets }: { tickets: AdminTicket[] }) {
   const labels: Record<AdminTicketStatus, string> = {
     waiting: "待機中",
     called: "呼出中",
+    pending: "保留中",
     redeemed: "受付済み",
     expired: "期限切れ",
     cancelled: "取消",
