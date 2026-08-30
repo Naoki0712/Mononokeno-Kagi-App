@@ -8,6 +8,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 type ScheduleScreenProps = {
   onBack: () => void;
+  onWaiting: () => void;
   supabaseUrl: string;
   supabasePublishableKey: string;
   classmateToken?: string;
@@ -108,132 +109,37 @@ const YOKAI_TEAMS = [
 
 export function ScheduleScreen({
   onBack,
-  supabaseUrl,
-  supabasePublishableKey,
-  classmateToken = "",
-  classmateId = "",
+  onWaiting,
 }: ScheduleScreenProps) {
-  const client = useMemo(() => {
-    if (!supabaseUrl || !supabasePublishableKey) return null;
-    return createClient(supabaseUrl, supabasePublishableKey, {
-      auth: {
-        persistSession: true,
-        autoRefreshToken: true,
-        detectSessionInUrl: true,
-      },
-    });
-  }, [supabasePublishableKey, supabaseUrl]);
-
-  const [view, setView] = useState<"schedule" | "details" | "availability" | "manuals">("schedule");
-  const [memberSchedules, setMemberSchedules] = useState<MemberScheduleRow[]>([]);
-  const [scheduleLoading, setScheduleLoading] = useState(true);
-  const [scheduleError, setScheduleError] = useState("");
-
-  useEffect(() => {
-    if (!client) {
-      const unavailable = window.setTimeout(() => setScheduleLoading(false), 0);
-      return () => window.clearTimeout(unavailable);
-    }
-
-    if (!classmateToken) {
-      const unavailable = window.setTimeout(() => setScheduleLoading(false), 0);
-      return () => window.clearTimeout(unavailable);
-    }
-
-    let active = true;
-    const loadSchedule = async () => {
-      if (active) {
-        setScheduleLoading(true);
-        setScheduleError("");
-      }
-
-      const result = await client.rpc("classmate_member_calendar", { p_token: classmateToken });
-
-      if (!active) return;
-      if (result.error) {
-        setScheduleError("スケジュールを読み込めませんでした。");
-      } else {
-        setMemberSchedules((result.data ?? []) as MemberScheduleRow[]);
-      }
-      setScheduleLoading(false);
-    };
-
-    void loadSchedule();
-    const refresh = window.setInterval(() => void loadSchedule(), 60_000);
-    return () => {
-      active = false;
-      window.clearInterval(refresh);
-    };
-  }, [classmateToken, client]);
-
-  const viewerGroup = memberSchedules.find(
-    (row) => row.id === classmateId && row.group_name !== null,
-  )?.group_name ?? null;
-  const canEditAvailability = !scheduleLoading && viewerGroup === null;
+  const [view, setView] = useState<"schedule" | "manuals">("schedule");
 
   if (view === "manuals") {
     return <ManualList onBack={() => setView("schedule")} />;
   }
 
-  if (view === "availability" && client) {
-    return (
-      <AvailabilityCalendar
-        client={client}
-        classmateToken={classmateToken}
-        onBack={() => setView("schedule")}
-        editingEnabled={canEditAvailability}
-      />
-    );
-  }
-
-  if (!client) {
-    return (
-      <SchedulePortal
-        onBack={onBack}
-        onManuals={() => setView("manuals")}
-        calendarMode="month"
-        rows={memberSchedules}
-        client={client}
-        classmateToken={classmateToken}
-        loading={scheduleLoading}
-        scheduleError={scheduleError}
-        authError="Supabaseの接続設定を読み込めませんでした。"
-      />
-    );
-  }
-
-  if (view === "details") {
-    return (
-      <SchedulePortal
-        onBack={onBack}
-        onAction={() => setView("schedule")}
-        onManuals={() => setView("manuals")}
-        actionLabel="月全体の予定"
-        calendarMode="details"
-        rows={memberSchedules}
-        client={client}
-        classmateToken={classmateToken}
-        loading={scheduleLoading}
-        scheduleError={scheduleError}
-        onAvailability={canEditAvailability ? () => setView("availability") : undefined}
-      />
-    );
-  }
-
   return (
-    <SchedulePortal
-      onBack={onBack}
-      onAction={() => setView("details")}
-      onManuals={() => setView("manuals")}
-      actionLabel="詳細の予定"
-      calendarMode="month"
-      rows={memberSchedules}
-      client={client}
-      classmateToken={classmateToken}
-      loading={scheduleLoading}
-      scheduleError={scheduleError}
-      onAvailability={canEditAvailability ? () => setView("availability") : undefined}
-    />
+    <SimpleSchedulePage onBack={onBack} title="スケジュールを確認する">
+      <span className="dailyScheduleDay">1日目</span>
+      <div className="dailyScheduleEmpty" role="status">
+        まだ予定が登録されていません。
+      </div>
+      <button
+        type="button"
+        className="scheduleAvailabilityEntry scheduleReceptionEntry"
+        onClick={onWaiting}
+      >
+        <List aria-hidden="true" />
+        <span>受付のシステムを使う</span>
+      </button>
+      <button
+        type="button"
+        className="scheduleManualEntry"
+        onClick={() => setView("manuals")}
+      >
+        <NotebookPen aria-hidden="true" />
+        <span>マニュアル一覧</span>
+      </button>
+    </SimpleSchedulePage>
   );
 }
 
