@@ -174,12 +174,19 @@ button:focus-visible {
 
 .primaryAction {
   min-height: 200px;
+  flex-direction: column;
+  gap: 22px;
   border-radius: 55px;
+}
+
+.primaryActionSupplement {
+  font-size: var(--font-detail);
+  line-height: 1.15;
 }
 
 .secondaryActions {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 26px;
   margin-top: 24px;
 }
@@ -5387,5 +5394,57 @@ button:focus-visible {
   .homeLogout {
     right: 16px;
     left: auto;
+  }
+}
+
+
+/* Festival-day schedule and ticket-machine-style primary action. */
+.dailyScheduleDay {
+  position: absolute;
+  top: 10.5%;
+  left: clamp(350px, 34vw, 520px);
+  z-index: 21;
+  border-radius: 7px;
+  padding: 8px 17px;
+  background: var(--white);
+  color: var(--black);
+  font-size: var(--font-main);
+  line-height: 1;
+}
+
+.dailyScheduleEmpty {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: min(900px, calc(100% - 64px));
+  color: var(--white);
+  font-size: var(--font-main);
+  text-align: center;
+  transform: translate(-50%, -50%);
+}
+
+.scheduleReceptionEntry {
+  font-size: var(--font-main);
+}
+
+@media (max-width: 680px) {
+  .primaryAction {
+    gap: 12px;
+  }
+
+  .primaryActionSupplement {
+    padding: 0 12px;
+    line-height: 1.25;
+  }
+
+  .dailyScheduleDay {
+    top: 8.5%;
+    left: auto;
+    right: 16px;
+    padding: 7px 12px;
+  }
+
+  .dailyScheduleEmpty {
+    width: calc(100% - 32px);
   }
 }
