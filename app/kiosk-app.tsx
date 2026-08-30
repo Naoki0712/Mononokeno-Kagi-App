@@ -117,7 +117,6 @@ export function KioskApp({
 
       {portalAccess !== "loading" && portalAccess !== "none" && screen === "home" && (
         <HomeScreen
-          studentId={classmateId}
           onNavigate={setScreen}
           onLogout={() => void logoutPortal()}
         />
@@ -126,6 +125,7 @@ export function KioskApp({
       {portalAccess !== "loading" && portalAccess !== "none" && screen === "schedule" && (
         <ScheduleScreen
           onBack={() => setScreen("home")}
+          onWaiting={() => setScreen("waiting")}
           supabaseUrl={supabaseUrl}
           supabasePublishableKey={supabasePublishableKey}
           classmateToken={classmateToken}
@@ -242,11 +242,9 @@ function ClassmateLogin({
 }
 
 function HomeScreen({
-  studentId,
   onNavigate,
   onLogout,
 }: {
-  studentId: string;
   onNavigate: (screen: Screen) => void;
   onLogout: () => void;
 }) {
@@ -260,7 +258,8 @@ function HomeScreen({
           className="actionButton primaryAction"
           onClick={() => onNavigate("schedule")}
         >
-          スケジュールを確認する
+          <span className="primaryActionTitle">スケジュールを確認する</span>
+          <span className="primaryActionSupplement">受付のシステムを使う・マニュアル一覧</span>
         </button>
         <div className="secondaryActions">
           <button
@@ -277,15 +276,6 @@ function HomeScreen({
           >
             マップを開く
           </button>
-          {ATTENDANCE_READER_IDS.has(studentId) && (
-            <button
-              type="button"
-              className="actionButton secondaryAction"
-              onClick={() => onNavigate("waiting")}
-            >
-              整理券を管理する
-            </button>
-          )}
         </div>
       </nav>
 
