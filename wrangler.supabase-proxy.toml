@@ -1,0 +1,7 @@
+name = "mononokeno-kagi-supabase-proxy"
+main = "worker/supabase-proxy.ts"
+compatibility_date = "2026-08-30"
+
+routes = [
+  { pattern = "mononokeno-kagi.space/api/supabase/*", zone_name = "mononokeno-kagi.space" }
+]
