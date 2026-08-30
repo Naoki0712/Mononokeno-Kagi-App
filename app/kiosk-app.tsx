@@ -149,6 +149,15 @@ export function KioskApp({
             title="映像を流す"
             onBack={() => setScreen("home")}
           />
+          <div className="videoEmbed">
+            <iframe
+              src="https://www.youtube-nocookie.com/embed/U0Nb1-rmdUo"
+              title="もののけの鍵 動画"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              referrerPolicy="strict-origin-when-cross-origin"
+              allowFullScreen
+            />
+          </div>
         </section>
       )}
 
