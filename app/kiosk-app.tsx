@@ -151,7 +151,7 @@ export function KioskApp({
           />
           <div className="videoEmbed">
             <iframe
-              src="https://www.youtube-nocookie.com/embed/U0Nb1-rmdUo"
+              src="https://www.youtube-nocookie.com/embed/GNv9cc8yRFI"
               title="もののけの鍵 動画"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
               referrerPolicy="strict-origin-when-cross-origin"
