@@ -11,6 +11,7 @@ export default function JapaneseWaitingPage() {
     <WaitingVisitor
       locale="jp"
       supabaseUrl={
+        process.env.NEXT_PUBLIC_SUPABASE_PROXY_URL ??
         process.env.SUPABASE_URL ??
         process.env.NEXT_PUBLIC_SUPABASE_URL ??
         ""
