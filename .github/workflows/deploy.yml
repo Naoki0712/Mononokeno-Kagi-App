@@ -28,7 +28,7 @@ jobs:
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
-          NEXT_PUBLIC_SUPABASE_PROXY_URL: https://mononokeno-kagi.space/api/supabase
+          NEXT_PUBLIC_SUPABASE_PROXY_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_PROXY_URL }}
         run: npx next build
       - name: Verify static entry point
         run: test -f out/index.html
