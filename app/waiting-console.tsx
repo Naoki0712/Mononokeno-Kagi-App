@@ -45,7 +45,7 @@ export function WaitingConsole({
 
   useEffect(() => { void refresh(); }, [refresh]);
   useEffect(() => {
-    const poll = window.setInterval(() => void refresh(), 10000);
+    const poll = window.setInterval(() => void refresh(), 1000);
     const clock = window.setInterval(() => setNow(Date.now()), 1000);
     return () => { window.clearInterval(poll); window.clearInterval(clock); };
   }, [refresh]);
