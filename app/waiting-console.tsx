@@ -125,6 +125,24 @@ export function WaitingConsole({
     else { setMessage(`${Number(data.ticket_number)}番を追加しました。`); await refresh(); }
   };
 
+  const resetTickets = async () => {
+    if (!client || busy) return;
+    const confirmed = window.confirm("本日の整理券をすべて削除し、次の番号を1番に戻しますか？");
+    if (!confirmed) return;
+    setBusy(true); setMessage("");
+    const { data, error } = await client.rpc("waiting_admin_reset_tickets", {
+      p_classmate_token: classmateToken,
+    });
+    setBusy(false);
+    if (error || !data?.ok) {
+      setMessage("整理券番号をリセットできませんでした。");
+      return;
+    }
+    setTicketMenu(null);
+    setMessage("本日の整理券番号をリセットしました。次は1番です。");
+    await refresh();
+  };
+
   return (
     <section className="subScreen waitingConsoleScreen" aria-labelledby="waiting-console-title">
       <header className="screenHeader waitingConsoleHeader">
@@ -141,7 +159,7 @@ export function WaitingConsole({
       {!snapshot ? <p className="waitingConsoleLoading">整理券情報を読み込み中</p> : view === 1
         ? <VisitorBoard tickets={snapshot.tickets} />
         : <StaffBoard tickets={snapshot.tickets} now={now} busy={busy} onMove={moveTicket} onAdd={addManual}
-            onOpenMenu={setTicketMenu} onOpenScanner={() => setScannerOpen(true)} />}
+            onOpenMenu={setTicketMenu} onOpenScanner={() => setScannerOpen(true)} onReset={resetTickets} />}
       {ticketMenu && (
         <TicketActionMenu
           menu={ticketMenu}
@@ -176,12 +194,13 @@ function VisitorBoard({ tickets }: { tickets: Ticket[] }) {
   );
 }
 
-function StaffBoard({ tickets, now, busy, onMove, onAdd, onOpenMenu, onOpenScanner }: {
+function StaffBoard({ tickets, now, busy, onMove, onAdd, onOpenMenu, onOpenScanner, onReset }: {
   tickets: Ticket[]; now: number; busy: boolean;
   onMove: (number: number, status: TicketStatus) => Promise<void>;
   onAdd: () => Promise<void>;
   onOpenMenu: (menu: TicketMenu) => void;
   onOpenScanner: () => void;
+  onReset: () => Promise<void>;
 }) {
   return (
     <div className="waitingStaffBoard">
@@ -194,6 +213,7 @@ function StaffBoard({ tickets, now, busy, onMove, onAdd, onOpenMenu, onOpenScann
       <aside className="waitingScript">
         <h2>整理券の受付</h2>
         <button type="button" className="waitingScanButton" onClick={onOpenScanner}>整理券を読み取る</button>
+        <button type="button" className="waitingResetButton" disabled={busy} onClick={() => void onReset()}>整理券番号をリセット</button>
       </aside>
     </div>
   );
