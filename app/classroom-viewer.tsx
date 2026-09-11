@@ -981,92 +981,281 @@ function InteractiveDiagram({
   );
 }
 
-function SchoolDiagram() {
-  const floors = [
-    {
-      floor: "1F",
-      left: ["手仕上げ", "フライス", "研削", "管理室", "材料試験室", "NC工作機械室", "ロボット制御室"],
-      center: ["溶接", "機械工場", "旋盤", "流体原動機室", "104ゼミ室", "103ゼミ室", "102ゼミ室", "101ゼミ室"],
-      top: ["サイエンススクエア", "教育相談室", "保健室", "展示資料室"],
-      right: ["小会議室", "校長室", "経営企画室（受付）", "主事室", "駐輪場"],
-    },
-    {
-      floor: "2F",
-      left: ["応用計測室", "機器準備室", "制御機器室", "第2製図室", "製図準備室", "第1製図室", "第2CAD室", "第1CAD室"],
-      center: ["第2電気工作室", "工作準備室", "第1電気工作室", "204ゼミ室", "203ゼミ室", "202ゼミ室", "201ゼミ室"],
-      top: ["視聴覚室", "司書室", "書庫", "図書室"],
-      right: ["放送室", "スタジオ", "印刷室", "職員室", "大会議室"],
-    },
-    {
-      floor: "3F",
-      left: ["機器分析室", "分析準備室", "環境分析室", "材料化学室", "物化準備室", "物理化学室", "化学分析室", "製造準備室", "化学製造室"],
-      center: ["305講義室", "バイオ化学室", "304ゼミ室", "303ゼミ室", "302ゼミ室", "301ゼミ室"],
-      top: ["調理室", "家庭科準備室", "被服室", "和室", "自販機コーナー", "生徒会室"],
-      right: ["HR3-6", "HR3-5", "HR3-4", "HR3-3", "HR3-2", "HR3-1"],
-    },
-    {
-      floor: "4F",
-      left: ["暗室", "レイアウト室", "第2情報デザイン室", "デザイン準備室", "第1情報デザイン室", "情報準備室", "情報技術室"],
-      center: ["405講義室", "404ゼミ室", "403ゼミ室", "402ゼミ室", "401ゼミ室"],
-      top: ["コンピュータ室", "401講義室", "LL教室", "LL管理室", "教材室（1）", "教材室（2）"],
-      right: ["HR2-6", "HR2-5", "HR2-4", "HR2-3", "HR2-2", "HR2-1"],
-    },
-    {
-      floor: "5F",
-      left: ["物理実験室", "物理準備室", "化学準備室", "化学実験室"],
-      center: ["HR1-6", "HR1-5"],
-      top: [],
-      right: ["生物実験室", "生物準備室", "HR1-4", "HR1-3", "HR1-2", "HR1-1"],
-    },
-    {
-      floor: "6F",
-      left: ["美術室", "美術準備室", "音楽準備室", "音楽室"],
-      center: ["601講義室", "602講義室"],
-      top: [],
-      right: [],
-    },
-  ] as const;
 
+type SchoolRoomKind = "lab" | "general" | "hr" | "service" | "current";
+type SchoolRoomShape = {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  label: string;
+  kind?: SchoolRoomKind;
+  small?: boolean;
+};
+type SchoolFloorShape = {
+  floor: string;
+  corridor: string;
+  rooms: SchoolRoomShape[];
+  stairs?: Array<{ x: number; y: number }>;
+  toilets?: Array<{ x: number; y: number }>;
+  elevators?: Array<{ x: number; y: number }>;
+  outlines?: string[];
+};
+
+const SCHOOL_FLOORS: SchoolFloorShape[] = [
+  {
+    floor: "1F",
+    corridor: "M188 22 H222 V92 H372 V128 H342 V238 H236 V270 H190 Z M222 92 H248 V52 H372 V92",
+    rooms: [
+      {x:18,y:20,w:46,h:44,label:"手仕上げ",kind:"lab"},
+      {x:18,y:64,w:46,h:48,label:"フライス",kind:"lab"},
+      {x:18,y:112,w:46,h:48,label:"研削",kind:"lab"},
+      {x:18,y:160,w:46,h:34,label:"管理室",kind:"general"},
+      {x:18,y:196,w:58,h:34,label:"材料試験室",kind:"lab"},
+      {x:76,y:196,w:58,h:34,label:"工業計測室",kind:"lab",small:true},
+      {x:134,y:196,w:54,h:34,label:"工具室",kind:"lab",small:true},
+      {x:28,y:232,w:94,h:40,label:"NC工作機械室",kind:"lab",small:true},
+      {x:28,y:272,w:94,h:30,label:"ロボット制御室",kind:"lab",small:true},
+      {x:124,y:232,w:64,h:28,label:"プログラミング室",kind:"lab",small:true},
+      {x:188,y:34,w:48,h:64,label:"溶接",kind:"lab"},
+      {x:66,y:62,w:122,h:98,label:"機械工場",kind:"lab"},
+      {x:134,y:98,w:54,h:62,label:"旋盤",kind:"lab"},
+      {x:190,y:128,w:48,h:78,label:"流体原動機室",kind:"lab",small:true},
+      {x:190,y:206,w:48,h:27,label:"104\nゼミ室",kind:"general",small:true},
+      {x:190,y:233,w:48,h:27,label:"103\nゼミ室",kind:"general",small:true},
+      {x:190,y:260,w:48,h:27,label:"102\nゼミ室",kind:"general",small:true},
+      {x:190,y:287,w:48,h:27,label:"101\nゼミ室",kind:"general",small:true},
+      {x:248,y:24,w:130,h:64,label:"サイエンススクエア",kind:"general"},
+      {x:378,y:24,w:42,h:32,label:"教育相談室",kind:"general",small:true},
+      {x:378,y:56,w:42,h:32,label:"保健室",kind:"general"},
+      {x:246,y:94,w:128,h:42,label:"展示資料室",kind:"general"},
+      {x:420,y:20,w:54,h:56,label:"小会議室",kind:"hr"},
+      {x:420,y:76,w:54,h:62,label:"校長室",kind:"hr"},
+      {x:420,y:138,w:54,h:62,label:"経営企画室\n（受付）",kind:"hr",small:true},
+      {x:420,y:200,w:54,h:62,label:"主事室",kind:"hr"},
+      {x:398,y:264,w:76,h:52,label:"駐輪場",kind:"service"},
+    ],
+    stairs:[{x:205,y:18},{x:355,y:220}],
+    toilets:[{x:392,y:54},{x:208,y:108}],
+    elevators:[{x:362,y:112}],
+    outlines:["M8 12 H188 V315 H112 V332 H28 V315 H8 Z","M396 12 H484 V330 H404 V314 H396 Z"],
+  },
+  {
+    floor: "2F",
+    corridor: "M178 20 H220 V86 H388 V126 H356 V238 H238 V282 H178 Z M220 86 H256 V48 H388 V86",
+    rooms: [
+      {x:18,y:18,w:110,h:54,label:"応用計測室",kind:"lab"},
+      {x:18,y:72,w:110,h:34,label:"機器準備室",kind:"lab"},
+      {x:18,y:106,w:110,h:50,label:"制御機器室",kind:"lab"},
+      {x:18,y:156,w:110,h:46,label:"第2製図室",kind:"lab"},
+      {x:18,y:202,w:110,h:30,label:"製図準備室",kind:"lab"},
+      {x:18,y:232,w:110,h:52,label:"第1製図室",kind:"lab"},
+      {x:18,y:284,w:110,h:42,label:"第2CAD室",kind:"lab"},
+      {x:18,y:326,w:110,h:42,label:"第1CAD室",kind:"lab"},
+      {x:178,y:102,w:48,h:58,label:"第2電気工作室",kind:"lab",small:true},
+      {x:178,y:160,w:48,h:36,label:"工作準備室",kind:"lab",small:true},
+      {x:178,y:196,w:48,h:58,label:"第1電気工作室",kind:"lab",small:true},
+      {x:178,y:254,w:48,h:28,label:"204\nゼミ室",kind:"general",small:true},
+      {x:178,y:282,w:48,h:28,label:"203\nゼミ室",kind:"general",small:true},
+      {x:178,y:310,w:48,h:28,label:"202\nゼミ室",kind:"general",small:true},
+      {x:178,y:338,w:48,h:28,label:"201\nゼミ室",kind:"general",small:true},
+      {x:256,y:22,w:102,h:72,label:"視聴覚室",kind:"general"},
+      {x:358,y:22,w:40,h:36,label:"司書室",kind:"general",small:true},
+      {x:358,y:58,w:40,h:36,label:"書庫",kind:"general",small:true},
+      {x:398,y:22,w:74,h:72,label:"図書室",kind:"general"},
+      {x:414,y:102,w:58,h:32,label:"放送室",kind:"hr",small:true},
+      {x:442,y:102,w:30,h:32,label:"スタジオ",kind:"hr",small:true},
+      {x:414,y:134,w:58,h:32,label:"印刷室",kind:"hr"},
+      {x:414,y:166,w:58,h:92,label:"職員室",kind:"hr"},
+      {x:414,y:258,w:58,h:70,label:"大会議室",kind:"hr"},
+    ],
+    stairs:[{x:197,y:66},{x:364,y:230}],
+    toilets:[{x:230,y:104},{x:400,y:60}],
+    elevators:[{x:366,y:130}],
+    outlines:["M6 10 H132 V374 H8 Z","M406 12 H482 V342 H410 Z"],
+  },
+  {
+    floor: "3F",
+    corridor: "M176 20 H220 V88 H392 V126 H358 V242 H236 V286 H176 Z M220 88 H258 V48 H392 V88",
+    rooms: [
+      {x:18,y:20,w:110,h:54,label:"機器分析室",kind:"lab"},
+      {x:18,y:74,w:110,h:34,label:"分析準備室",kind:"lab"},
+      {x:18,y:108,w:110,h:50,label:"環境分析室",kind:"lab"},
+      {x:18,y:158,w:110,h:50,label:"材料化学室",kind:"lab"},
+      {x:18,y:208,w:110,h:32,label:"物化準備室",kind:"lab"},
+      {x:18,y:240,w:110,h:50,label:"物理化学室",kind:"lab"},
+      {x:18,y:290,w:110,h:42,label:"化学分析室",kind:"lab"},
+      {x:18,y:332,w:110,h:32,label:"製造準備室",kind:"lab"},
+      {x:18,y:364,w:110,h:44,label:"化学製造室",kind:"lab"},
+      {x:176,y:108,w:48,h:54,label:"305講義室",kind:"general",small:true},
+      {x:176,y:162,w:48,h:74,label:"バイオ化学室",kind:"general",small:true},
+      {x:176,y:236,w:48,h:28,label:"304\nゼミ室",kind:"general",small:true},
+      {x:176,y:264,w:48,h:28,label:"303\nゼミ室",kind:"general",small:true},
+      {x:176,y:292,w:48,h:28,label:"302\nゼミ室",kind:"general",small:true},
+      {x:176,y:320,w:48,h:28,label:"301\nゼミ室",kind:"general",small:true},
+      {x:258,y:22,w:80,h:68,label:"調理室",kind:"general"},
+      {x:338,y:22,w:78,h:68,label:"被服室",kind:"general"},
+      {x:300,y:90,w:78,h:36,label:"家庭科準備室",kind:"general",small:true},
+      {x:258,y:138,w:78,h:38,label:"和室",kind:"general"},
+      {x:336,y:138,w:42,h:38,label:"自販機\nコーナー",kind:"general",small:true},
+      {x:378,y:138,w:38,h:38,label:"生徒会室",kind:"general",small:true},
+      {x:418,y:26,w:58,h:58,label:"HR3-6",kind:"hr"},
+      {x:418,y:84,w:58,h:58,label:"HR3-5",kind:"hr"},
+      {x:418,y:142,w:58,h:58,label:"HR3-4",kind:"hr"},
+      {x:418,y:200,w:58,h:58,label:"HR3-3",kind:"hr"},
+      {x:418,y:258,w:58,h:58,label:"HR3-2",kind:"hr"},
+      {x:418,y:316,w:58,h:58,label:"HR3-1",kind:"hr"},
+    ],
+    stairs:[{x:197,y:67},{x:368,y:242}],
+    toilets:[{x:230,y:104},{x:398,y:64}],
+    elevators:[{x:382,y:154}],
+    outlines:["M6 12 H132 V416 H8 Z","M410 12 H484 V386 H412 Z"],
+  },
+  {
+    floor: "4F",
+    corridor: "M162 22 H210 V88 H398 V126 H366 V250 H226 V292 H162 Z M210 88 H252 V48 H398 V88",
+    rooms: [
+      {x:18,y:26,w:92,h:28,label:"暗室",kind:"lab",small:true},
+      {x:18,y:54,w:92,h:48,label:"レイアウト室",kind:"lab"},
+      {x:18,y:102,w:92,h:54,label:"第2情報デザイン室",kind:"lab",small:true},
+      {x:18,y:156,w:92,h:40,label:"デザイン準備室",kind:"lab",small:true},
+      {x:18,y:196,w:92,h:54,label:"第1情報デザイン室",kind:"lab",small:true},
+      {x:18,y:250,w:92,h:38,label:"情報準備室",kind:"lab",small:true},
+      {x:18,y:288,w:92,h:92,label:"情報技術室",kind:"lab"},
+      {x:162,y:112,w:48,h:88,label:"405\n講義室",kind:"general",small:true},
+      {x:162,y:200,w:48,h:30,label:"404\nゼミ室",kind:"general",small:true},
+      {x:162,y:230,w:48,h:30,label:"403\nゼミ室",kind:"general",small:true},
+      {x:162,y:260,w:48,h:30,label:"402\nゼミ室",kind:"general",small:true},
+      {x:162,y:290,w:48,h:30,label:"401\nゼミ室",kind:"general",small:true},
+      {x:252,y:22,w:82,h:68,label:"コンピュータ室",kind:"general",small:true},
+      {x:334,y:22,w:70,h:68,label:"LL教室",kind:"general"},
+      {x:334,y:90,w:70,h:36,label:"LL管理室",kind:"general",small:true},
+      {x:252,y:138,w:76,h:40,label:"教材室（1）",kind:"general"},
+      {x:328,y:138,w:76,h:40,label:"教材室（2）",kind:"general"},
+      {x:420,y:26,w:58,h:58,label:"HR2-6",kind:"hr"},
+      {x:420,y:84,w:58,h:58,label:"HR2-5",kind:"hr"},
+      {x:420,y:142,w:58,h:58,label:"HR2-4",kind:"hr"},
+      {x:420,y:200,w:58,h:58,label:"HR2-3",kind:"hr"},
+      {x:420,y:258,w:58,h:58,label:"HR2-2",kind:"current"},
+      {x:420,y:316,w:58,h:58,label:"HR2-1",kind:"hr"},
+    ],
+    stairs:[{x:184,y:69},{x:370,y:246}],
+    toilets:[{x:226,y:104},{x:400,y:62}],
+    elevators:[{x:382,y:154}],
+    outlines:["M6 14 H116 V388 H10 Z","M412 14 H486 V388 H414 Z"],
+  },
+  {
+    floor: "5F",
+    corridor: "M206 70 H390 V108 H354 V240 H238 V276 H206 Z M206 70 H242 V48 H390 V70",
+    rooms: [
+      {x:246,y:22,w:92,h:70,label:"物理実験室",kind:"general"},
+      {x:338,y:54,w:42,h:38,label:"物理\n準備室",kind:"general",small:true},
+      {x:380,y:54,w:42,h:38,label:"化学\n準備室",kind:"general",small:true},
+      {x:422,y:22,w:78,h:70,label:"化学実験室",kind:"general"},
+      {x:254,y:128,w:82,h:42,label:"HR1-6",kind:"general"},
+      {x:336,y:128,w:82,h:42,label:"HR1-5",kind:"general"},
+      {x:420,y:94,w:58,h:62,label:"生物実験室",kind:"hr"},
+      {x:420,y:156,w:58,h:42,label:"生物準備室",kind:"hr",small:true},
+      {x:420,y:198,w:58,h:54,label:"HR1-4",kind:"hr"},
+      {x:420,y:252,w:58,h:54,label:"HR1-3",kind:"hr"},
+      {x:420,y:306,w:58,h:54,label:"HR1-2",kind:"hr"},
+      {x:420,y:360,w:58,h:54,label:"HR1-1",kind:"hr"},
+    ],
+    stairs:[{x:236,y:118},{x:370,y:278}],
+    toilets:[{x:400,y:66}],
+    elevators:[{x:390,y:142}],
+    outlines:["M94 60 H206 V414 H96 Z","M412 14 H486 V424 H414 Z"],
+  },
+  {
+    floor: "6F",
+    corridor: "M246 90 H456 V130 H418 V176 H246 Z",
+    rooms: [
+      {x:250,y:18,w:88,h:72,label:"美術室",kind:"general"},
+      {x:338,y:50,w:46,h:40,label:"美術\n準備室",kind:"general",small:true},
+      {x:384,y:50,w:46,h:40,label:"音楽\n準備室",kind:"general",small:true},
+      {x:430,y:18,w:82,h:72,label:"音楽室",kind:"general"},
+      {x:288,y:130,w:94,h:46,label:"601\n講義室",kind:"general"},
+      {x:382,y:130,w:94,h:46,label:"602\n講義室",kind:"general"},
+    ],
+    stairs:[{x:256,y:126}],
+    elevators:[{x:472,y:142}],
+    outlines:["M238 8 H518 V186 H490 V338 H450 V186 H238 Z"],
+  },
+];
+
+function SchoolRoomRect({ room }: { room: SchoolRoomShape }) {
+  const fill =
+    room.kind === "current" ? "#e6002d" :
+    room.kind === "hr" ? "#dff0e6" :
+    room.kind === "general" ? "#f5e7e8" :
+    room.kind === "service" ? "#eceadf" :
+    "#eaf1f5";
+  const lines = room.label.split("\n");
+  return (
+    <g>
+      <rect x={room.x} y={room.y} width={room.w} height={room.h} fill={fill} stroke="#666" strokeWidth="1.2" />
+      <text
+        x={room.x + room.w / 2}
+        y={room.y + room.h / 2 - (lines.length - 1) * 5}
+        textAnchor="middle"
+        dominantBaseline="middle"
+        fill={room.kind === "current" ? "#fff" : "#202020"}
+        fontSize={room.small ? 7.2 : 8.8}
+        fontFamily="'Noto Sans JP','Yu Gothic',sans-serif"
+      >
+        {lines.map((line, index) => (
+          <tspan key={index} x={room.x + room.w / 2} dy={index === 0 ? 0 : 10}>{line}</tspan>
+        ))}
+      </text>
+      {room.kind === "current" && (
+        <text x={room.x + room.w / 2} y={room.y + room.h - 7} textAnchor="middle" fill="#fff" fontSize="6.5">
+          もののけの鍵
+        </text>
+      )}
+    </g>
+  );
+}
+
+function SchoolFloorSvg({ floor }: { floor: SchoolFloorShape }) {
+  return (
+    <svg className="schoolFloorSvg" viewBox="0 0 520 430" role="img" aria-label={`${floor.floor}校内図`}>
+      <path d={floor.corridor} fill="#d8d8d0" stroke="#6b6b6b" strokeWidth="1.3" />
+      {floor.outlines?.map((d, i) => <path key={i} d={d} fill="none" stroke="#bdbdbd" strokeWidth="1.6" />)}
+      {floor.rooms.map((room) => <SchoolRoomRect key={`${room.x}-${room.y}-${room.label}`} room={room} />)}
+      {floor.stairs?.map((p, i) => (
+        <g key={`s-${i}`} transform={`translate(${p.x} ${p.y})`} stroke="#3e3e3e" strokeWidth="1">
+          {Array.from({ length: 7 }).map((_, n) => <line key={n} x1="0" y1={n * 3} x2="22" y2={n * 3} />)}
+        </g>
+      ))}
+      {floor.toilets?.map((p, i) => (
+        <g key={`t-${i}`} transform={`translate(${p.x} ${p.y})`}>
+          <rect width="18" height="24" fill="#f3f0df" stroke="#696969" />
+          <text x="9" y="10" textAnchor="middle" fontSize="7" fill="#e35b64">▲</text>
+          <text x="9" y="20" textAnchor="middle" fontSize="7" fill="#496cc4">▼</text>
+        </g>
+      ))}
+      {floor.elevators?.map((p, i) => (
+        <g key={`e-${i}`} transform={`translate(${p.x} ${p.y})`}>
+          <rect width="18" height="18" rx="2" fill="#eeeade" stroke="#696969" />
+          <text x="9" y="13" textAnchor="middle" fontSize="11" fill="#555">↕</text>
+        </g>
+      ))}
+    </svg>
+  );
+}
+
+function SchoolDiagram() {
   return (
     <div className="schoolDiagram schoolDiagramAllFloors" aria-label="校内1階から6階までの案内図">
       <div className="schoolMapHeading">
         <strong>校内ご案内</strong>
         <span>SCHOOL INFORMATION</span>
       </div>
-      <div className="schoolFloorGrid">
-        {floors.map((floor) => (
-          <section className="schoolFloorPanel" key={floor.floor} aria-label={`${floor.floor}案内図`}>
+      <div className="schoolFloorGrid schoolFloorGridSvg">
+        {SCHOOL_FLOORS.map((floor) => (
+          <section className="schoolFloorPanel schoolFloorPanelSvg" key={floor.floor}>
             <h3>{floor.floor}</h3>
-            <div className="schoolFloorPlan">
-              <div className="schoolWing schoolWingLeft">
-                {floor.left.map((room) => <span key={room}>{room}</span>)}
-              </div>
-
-              <div className="schoolCore">
-                <div className="schoolTopRooms">
-                  {floor.top.map((room) => <span key={room}>{room}</span>)}
-                </div>
-                <div className="schoolCorridorShape" aria-hidden="true">
-                  <i className="schoolStairMark">≋</i>
-                  <i className="schoolLiftMark">↕</i>
-                </div>
-                <div className="schoolCenterRooms">
-                  {floor.center.map((room) => <span key={room}>{room}</span>)}
-                </div>
-              </div>
-
-              <div className="schoolWing schoolWingRight">
-                {floor.right.map((room) => (
-                  <span
-                    key={room}
-                    className={room === "HR2-2" ? "schoolCurrentRoom" : undefined}
-                  >
-                    {room}
-                    {room === "HR2-2" && <small>もののけの鍵</small>}
-                  </span>
-                ))}
-              </div>
-            </div>
+            <SchoolFloorSvg floor={floor} />
           </section>
         ))}
       </div>
