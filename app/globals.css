@@ -4884,80 +4884,203 @@ button:focus-visible {
   position: relative;
   width: 100%;
   height: 100%;
-  border: 3px solid var(--white);
-  background:
-    linear-gradient(rgb(255 255 255 / 5%) 1px, transparent 1px),
-    linear-gradient(90deg, rgb(255 255 255 / 5%) 1px, transparent 1px),
-    rgb(5 5 5 / 92%);
-  background-size: 10% 16.666%;
 }
 
-.schoolFloorLabel {
-  position: absolute;
-  top: 5%;
-  left: 4%;
-  font-size: var(--font-main);
+.schoolDiagramAllFloors {
+  min-width: 980px;
+  min-height: 780px;
+  padding: 28px 34px 38px;
+  border: 0;
+  background: #050505;
+  color: var(--white);
+}
+
+.schoolMapHeading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 24px;
+  border-bottom: 3px solid rgb(255 255 255 / 78%);
+  padding: 0 6px 12px;
+}
+
+.schoolMapHeading strong {
+  font-size: clamp(28px, 3.4vw, 52px);
   font-weight: 400;
+  line-height: 1;
+  letter-spacing: 0.03em;
 }
 
-.schoolRoom,
-.schoolCorridor,
-.schoolStairs {
-  position: absolute;
+.schoolMapHeading span {
+  font-family: Inter, Arial, sans-serif;
+  font-size: clamp(12px, 1.35vw, 22px);
+  letter-spacing: 0.24em;
+}
+
+.schoolFloorGrid {
   display: grid;
+  grid-template-columns: repeat(2, minmax(420px, 1fr));
+  gap: 34px 42px;
+  padding-top: 26px;
+}
+
+.schoolFloorPanel {
+  position: relative;
+  min-height: 285px;
+}
+
+.schoolFloorPanel h3 {
+  margin: 0 0 12px;
+  font-family: Inter, Arial, sans-serif;
+  font-size: 44px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0.04em;
+}
+
+.schoolFloorPlan {
+  display: grid;
+  grid-template-columns: 30% 1fr 24%;
+  min-height: 230px;
+  align-items: stretch;
+}
+
+.schoolWing,
+.schoolTopRooms,
+.schoolCenterRooms {
+  display: flex;
+  flex-direction: column;
+}
+
+.schoolWing span,
+.schoolTopRooms span,
+.schoolCenterRooms span {
+  display: grid;
+  min-height: 28px;
   place-items: center;
-  border: 2px solid rgb(255 255 255 / 74%);
-  background: rgb(255 255 255 / 8%);
-  font-size: var(--font-detail);
+  border: 1px solid #525252;
+  background: #edf4f8;
+  color: #1d1d1d;
+  padding: 3px 5px;
+  font-family: "Noto Sans JP", "Yu Gothic", sans-serif;
+  font-size: 10px;
+  line-height: 1.15;
   text-align: center;
 }
 
-.schoolRoom {
-  top: 18%;
-  width: 20%;
-  height: 28%;
+.schoolWingLeft span {
+  background: #edf4f8;
 }
 
-.schoolRoomA {
-  left: 7%;
+.schoolTopRooms span,
+.schoolCenterRooms span {
+  background: #f6e8e9;
 }
 
-.schoolRoomCurrent {
-  left: 28.5%;
-  border-color: var(--white);
-  background: rgb(255 255 255 / 28%);
+.schoolWingRight span {
+  background: #e3f2ea;
 }
 
-.schoolRoomB {
-  left: 50%;
+.schoolCore {
+  position: relative;
+  display: grid;
+  grid-template-rows: auto 34px 1fr;
+  align-content: start;
 }
 
-.schoolRoomC {
-  left: 71.5%;
+.schoolTopRooms {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
-.schoolCorridor {
+.schoolCorridorShape {
+  position: relative;
+  min-height: 34px;
+  border-top: 1px solid #696969;
+  border-bottom: 1px solid #696969;
+  background: #d9d9d2;
+}
+
+.schoolCorridorShape::before {
+  position: absolute;
+  right: 13%;
+  bottom: -58px;
+  width: 34px;
+  height: 58px;
+  border-right: 2px solid #7a7a7a;
+  border-bottom: 2px solid #7a7a7a;
+  content: "";
+}
+
+.schoolStairMark,
+.schoolLiftMark {
+  position: absolute;
+  top: 50%;
+  color: #3d3d3d;
+  font-family: Arial, sans-serif;
+  font-style: normal;
+  transform: translateY(-50%);
+}
+
+.schoolStairMark {
+  left: 8%;
+  font-size: 24px;
+  letter-spacing: -0.18em;
+}
+
+.schoolLiftMark {
   right: 7%;
-  bottom: 22%;
-  left: 7%;
-  height: 15%;
-  border-right: 0;
-  border-left: 0;
-  color: rgb(255 255 255 / 74%);
+  font-size: 21px;
 }
 
-.schoolStairs {
-  bottom: 4%;
-  width: 15%;
-  height: 13%;
+.schoolCenterRooms {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-content: start;
 }
 
-.schoolStairsLeft {
-  left: 7%;
+.schoolWingRight {
+  border-left: 8px solid #d9d9d2;
 }
 
-.schoolStairsRight {
-  right: 7%;
+.schoolCurrentRoom {
+  position: relative;
+  background: #e6002d !important;
+  color: #ffffff !important;
+  border-color: #ff6680 !important;
+  font-weight: 700;
+}
+
+.schoolCurrentRoom small {
+  display: block;
+  margin-top: 2px;
+  font-size: 7px;
+  font-weight: 400;
+  letter-spacing: 0.03em;
+}
+
+@media (max-width: 680px) {
+  .schoolDiagramAllFloors {
+    min-width: 860px;
+    min-height: 760px;
+    padding: 22px 26px 32px;
+  }
+
+  .schoolFloorGrid {
+    grid-template-columns: repeat(2, minmax(380px, 1fr));
+    gap: 28px 32px;
+  }
+
+  .schoolFloorPanel h3 {
+    font-size: 38px;
+  }
+
+  .schoolWing span,
+  .schoolTopRooms span,
+  .schoolCenterRooms span {
+    min-height: 26px;
+    font-size: 9px;
+  }
 }
 
 .viewerActions {
