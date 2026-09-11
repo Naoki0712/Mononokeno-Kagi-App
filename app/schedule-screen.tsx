@@ -42,11 +42,53 @@ type GroupName = "Class-leader" | "Layout" | "Gimmick" | "Decoration" | "Gadget"
 type BaseName = "Signboard" | "Yokai" | "PR";
 
 type FestivalRole = "受付" | "スタッフ" | "チェックアウト";
+type FestivalRoleKey = "reception" | "staff" | "checkout";
 type FestivalShift = {
   time: string;
-  reception: readonly string[];
-  staff: readonly string[];
-  checkout: readonly string[];
+  reception: string[];
+  staff: string[];
+  checkout: string[];
+};
+
+type FestivalAssignmentRow = {
+  day: "sat" | "sun";
+  slot: number;
+  role: FestivalRoleKey;
+  position: number;
+  student_id: string;
+};
+
+type FestivalSnapshot = {
+  ok: boolean;
+  reason?: string;
+  can_edit?: boolean;
+  assignments?: FestivalAssignmentRow[];
+};
+
+type FestivalCandidateResponse = {
+  ok: boolean;
+  reason?: string;
+  candidates?: string[];
+};
+
+type FestivalReassignResponse = {
+  ok: boolean;
+  reason?: string;
+};
+
+type FestivalMenu = {
+  dayKey: "sat" | "sun";
+  slot: number;
+  time: string;
+  role: FestivalRole;
+  roleKey: FestivalRoleKey;
+  position: number;
+  currentId: string;
+  left: number;
+  top: number;
+  placement: "above" | "below";
+  candidates: string[];
+  loading: boolean;
 };
 
 const FESTIVAL_SHIFTS = {
@@ -64,7 +106,7 @@ const FESTIVAL_SHIFTS = {
     { time: "12:55〜14:05", reception: ["2222", "2233"], staff: ["2206", "2213", "2218", "2219", "2229", "2230"], checkout: ["2208"] },
     { time: "13:55〜15:05", reception: ["2224", "2225"], staff: ["2207", "2214", "2216", "2220", "2227", "2232"], checkout: ["2226"] },
   ],
-} as const satisfies Record<string, readonly FestivalShift[]>;
+} satisfies Record<string, FestivalShift[]>;
 
 type FestivalDay = keyof typeof FESTIVAL_SHIFTS;
 
@@ -127,10 +169,20 @@ const YOKAI_TEAMS = [
 export function ScheduleScreen({
   onBack,
   onWaiting,
+  supabaseUrl,
+  supabasePublishableKey,
+  classmateToken = "",
   classmateId = "",
 }: ScheduleScreenProps) {
   const [view, setView] = useState<"schedule" | "manuals">("schedule");
   const [festivalDay, setFestivalDay] = useState<FestivalDay>("土曜日");
+  const client = useMemo(
+    () =>
+      supabaseUrl && supabasePublishableKey
+        ? createClient(supabaseUrl, supabasePublishableKey, { auth: { persistSession: false } })
+        : null,
+    [supabasePublishableKey, supabaseUrl],
+  );
 
   if (view === "manuals") {
     return <ManualList onBack={() => setView("schedule")} />;
@@ -138,7 +190,13 @@ export function ScheduleScreen({
 
   return (
     <SimpleSchedulePage onBack={onBack} title="スケジュールを確認する">
-      <FestivalSchedule day={festivalDay} onDayChange={setFestivalDay} classmateId={classmateId} />
+      <FestivalSchedule
+        day={festivalDay}
+        onDayChange={setFestivalDay}
+        classmateId={classmateId}
+        classmateToken={classmateToken}
+        client={client}
+      />
       <button
         type="button"
         className="scheduleAvailabilityEntry scheduleReceptionEntry"
@@ -163,17 +221,138 @@ function FestivalSchedule({
   day,
   onDayChange,
   classmateId,
+  classmateToken,
+  client,
 }: {
   day: FestivalDay;
   onDayChange: (day: FestivalDay) => void;
   classmateId: string;
+  classmateToken: string;
+  client: SupabaseClient | null;
 }) {
-  const roleEntries: Array<{ role: FestivalRole; key: keyof Pick<FestivalShift, "reception" | "staff" | "checkout"> }> = [
+  const roleEntries: Array<{ role: FestivalRole; key: FestivalRoleKey }> = [
     { role: "受付", key: "reception" },
     { role: "スタッフ", key: "staff" },
     { role: "チェックアウト", key: "checkout" },
   ];
-  const shifts: readonly FestivalShift[] = FESTIVAL_SHIFTS[day];
+  const [schedule, setSchedule] = useState<Record<FestivalDay, FestivalShift[]>>(() => cloneFestivalShifts());
+  const [canEdit, setCanEdit] = useState(false);
+  const [menu, setMenu] = useState<FestivalMenu | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [status, setStatus] = useState("");
+  const shifts = schedule[day];
+
+  const loadSchedule = useCallback(async () => {
+    if (!client || !classmateToken) return;
+
+    const { data, error } = await client.rpc("festival_shift_snapshot", { p_token: classmateToken });
+    if (error) return;
+
+    const snapshot = data as FestivalSnapshot | null;
+    if (!snapshot?.ok || !Array.isArray(snapshot.assignments)) return;
+
+    setSchedule(applyFestivalAssignments(snapshot.assignments));
+    setCanEdit(Boolean(snapshot.can_edit));
+  }, [classmateToken, client]);
+
+  useEffect(() => {
+    const initial = window.setTimeout(() => void loadSchedule(), 0);
+    const interval = window.setInterval(() => void loadSchedule(), 5000);
+    return () => {
+      window.clearTimeout(initial);
+      window.clearInterval(interval);
+    };
+  }, [loadSchedule]);
+
+  useEffect(() => {
+    if (!menu) return;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMenu(null);
+    };
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, [menu]);
+
+  const openCandidateMenu = async (
+    event: React.MouseEvent<HTMLButtonElement>,
+    slot: number,
+    time: string,
+    role: FestivalRole,
+    roleKey: FestivalRoleKey,
+    position: number,
+    currentId: string,
+  ) => {
+    if (!canEdit || !client || !classmateToken) return;
+
+    const rect = event.currentTarget.getBoundingClientRect();
+    const placement = rect.top < 340 ? "below" : "above";
+    const menuWidth = Math.min(390, window.innerWidth - 24);
+    const left = Math.min(window.innerWidth - menuWidth / 2 - 12, Math.max(menuWidth / 2 + 12, rect.left + rect.width / 2));
+    const dayKey = day === "土曜日" ? "sat" : "sun";
+    const nextMenu: FestivalMenu = {
+      dayKey,
+      slot,
+      time,
+      role,
+      roleKey,
+      position,
+      currentId,
+      left,
+      top: placement === "below" ? rect.bottom + 10 : rect.top - 10,
+      placement,
+      candidates: [],
+      loading: true,
+    };
+    setMenu(nextMenu);
+    setStatus("");
+
+    const { data, error } = await client.rpc("festival_shift_candidates", {
+      p_token: classmateToken,
+      p_day: dayKey,
+      p_slot: slot,
+    });
+    const response = data as FestivalCandidateResponse | null;
+    if (error || !response?.ok) {
+      setMenu((current) => current ? { ...current, loading: false } : null);
+      setStatus("候補を取得できませんでした。もう一度お試しください。");
+      return;
+    }
+    setMenu((current) => current ? { ...current, loading: false, candidates: response.candidates ?? [] } : null);
+  };
+
+  const reassign = async (newStudentId: string) => {
+    if (!menu || !client || saving) return;
+    setSaving(true);
+    const previousStudentId = menu.currentId;
+    const { data, error } = await client.rpc("festival_shift_reassign", {
+      p_token: classmateToken,
+      p_day: menu.dayKey,
+      p_slot: menu.slot,
+      p_role: menu.roleKey,
+      p_position: menu.position,
+      p_new_student_id: newStudentId,
+    });
+    const response = data as FestivalReassignResponse | null;
+
+    if (error || !response?.ok) {
+      const message = response?.reason === "already_assigned"
+        ? "その人は同じ時間の別の役割に入っています。最新の候補を確認してください。"
+        : response?.reason === "ineligible"
+          ? "その人は設定された条件に合いません。"
+          : "変更できませんでした。もう一度お試しください。";
+      setStatus(message);
+      setMenu(null);
+      setSaving(false);
+      await loadSchedule();
+      return;
+    }
+
+    setMenu(null);
+    setStatus(`${previousStudentId}を${newStudentId}に変更しました。`);
+    await loadSchedule();
+    setSaving(false);
+  };
+
   const ownAssignments = shifts.flatMap((shift) =>
     roleEntries
       .filter(({ key }) => shift[key].includes(classmateId))
@@ -204,19 +383,32 @@ function FestivalSchedule({
         </p>
       )}
 
+      {canEdit && <p className="festivalEditHint">IDをタップすると、条件に合う交代候補を選べます。</p>}
+      {status && <p className="festivalShiftStatus" role="status">{status}</p>}
+
       <div className="festivalTableScroll">
         <table className="festivalShiftTable">
           <thead>
             <tr><th>時間</th><th>受付（2人）</th><th>スタッフ（6人）</th><th>チェックアウト（1人）</th></tr>
           </thead>
           <tbody>
-            {shifts.map((shift) => (
+            {shifts.map((shift, shiftIndex) => (
               <tr key={shift.time}>
                 <th scope="row">{shift.time}</th>
                 {roleEntries.map(({ role, key }) => (
                   <td data-role={role} key={key}>
-                    {shift[key].map((id) => (
-                      <strong className={id === classmateId ? "isSelf" : ""} key={id}>{id}</strong>
+                    {shift[key].map((id, positionIndex) => canEdit ? (
+                      <button
+                        type="button"
+                        className={`festivalShiftId${id === classmateId ? " isSelf" : ""}`}
+                        aria-label={`${day} ${shift.time} ${role}の${id}を交代する`}
+                        onClick={(event) => void openCandidateMenu(event, shiftIndex + 1, shift.time, role, key, positionIndex + 1, id)}
+                        key={`${key}-${positionIndex}`}
+                      >
+                        {id}
+                      </button>
+                    ) : (
+                      <strong className={id === classmateId ? "isSelf" : ""} key={`${key}-${positionIndex}`}>{id}</strong>
                     ))}
                   </td>
                 ))}
@@ -226,8 +418,76 @@ function FestivalSchedule({
         </table>
       </div>
       <p className="festivalHandoffNote">表示時刻には、前後5分の引き継ぎ・移動時間を含みます。</p>
+
+      {menu && (
+        <>
+          <button
+            type="button"
+            className="festivalShiftMenuBackdrop"
+            aria-label="交代候補を閉じる"
+            onClick={() => setMenu(null)}
+          />
+          <div
+            className={`festivalShiftMenu ${menu.placement}`}
+            style={{ left: menu.left, top: menu.top }}
+            role="dialog"
+            aria-modal="true"
+            aria-label={`${menu.currentId}の交代候補`}
+          >
+            <div className="festivalShiftMenuHeader">
+              <div>
+                <strong>{menu.currentId} の交代候補</strong>
+                <span>{menu.time}・{menu.role}</span>
+              </div>
+              <button type="button" aria-label="閉じる" onClick={() => setMenu(null)}><X aria-hidden="true" /></button>
+            </div>
+            {menu.loading ? (
+              <p className="festivalShiftMenuMessage"><LoaderCircle className="festivalShiftSpinner" aria-hidden="true" />候補を確認中…</p>
+            ) : menu.candidates.length ? (
+              <div className="festivalShiftCandidates">
+                {menu.candidates.map((candidate) => (
+                  <button type="button" disabled={saving} onClick={() => void reassign(candidate)} key={candidate}>
+                    {candidate}
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <p className="festivalShiftMenuMessage">条件に合う候補はいません。</p>
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
+}
+
+function cloneFestivalShifts(): Record<FestivalDay, FestivalShift[]> {
+  return {
+    土曜日: FESTIVAL_SHIFTS.土曜日.map((shift) => ({
+      ...shift,
+      reception: [...shift.reception],
+      staff: [...shift.staff],
+      checkout: [...shift.checkout],
+    })),
+    日曜日: FESTIVAL_SHIFTS.日曜日.map((shift) => ({
+      ...shift,
+      reception: [...shift.reception],
+      staff: [...shift.staff],
+      checkout: [...shift.checkout],
+    })),
+  };
+}
+
+function applyFestivalAssignments(assignments: FestivalAssignmentRow[]): Record<FestivalDay, FestivalShift[]> {
+  const schedule = cloneFestivalShifts();
+  for (const assignment of assignments) {
+    const day = assignment.day === "sat" ? "土曜日" : assignment.day === "sun" ? "日曜日" : null;
+    const shift = day ? schedule[day][assignment.slot - 1] : undefined;
+    const ids = shift?.[assignment.role];
+    if (!ids || assignment.position < 1 || assignment.position > ids.length) continue;
+    ids[assignment.position - 1] = assignment.student_id;
+  }
+  return schedule;
 }
 
 function SimpleSchedulePage({

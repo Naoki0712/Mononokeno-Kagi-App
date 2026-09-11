@@ -5644,19 +5644,195 @@ button:focus-visible {
   white-space: nowrap;
 }
 
-.festivalShiftTable td strong {
+.festivalShiftTable td strong,
+.festivalShiftId {
   display: inline-block;
   margin: 3px 5px;
   border-radius: 6px;
   padding: 3px 5px;
+  color: inherit;
   font-size: clamp(15px, 1.2vw, 20px);
   font-weight: 400;
 }
 
-.festivalShiftTable td strong.isSelf {
+.festivalShiftId {
+  border: 1px solid rgb(255 255 255 / 38%);
+  background: rgb(255 255 255 / 8%);
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 120ms ease, border-color 120ms ease, transform 120ms ease;
+}
+
+.festivalShiftId:hover,
+.festivalShiftId:focus-visible {
+  border-color: #ffe277;
+  background: rgb(255 226 119 / 16%);
+  outline: none;
+  transform: translateY(-1px);
+}
+
+.festivalShiftTable td strong.isSelf,
+.festivalShiftId.isSelf {
   background: #ffe277;
   color: #111;
   box-shadow: 0 0 0 2px #fff;
+}
+
+.festivalEditHint,
+.festivalShiftStatus {
+  flex: 0 0 auto;
+  margin: -5px 0 0;
+  color: #ffe277;
+  font-size: clamp(13px, 1vw, 16px);
+  text-align: center;
+}
+
+.festivalShiftStatus {
+  color: #fff;
+}
+
+.festivalShiftMenuBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 119;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  cursor: default;
+}
+
+.festivalShiftMenu {
+  position: fixed;
+  z-index: 120;
+  width: min(390px, calc(100vw - 24px));
+  border: 1px solid #5d5d5d;
+  border-radius: 9px;
+  padding: 12px;
+  background: #1f1f1f;
+  color: #fff;
+  box-shadow: 0 8px 26px rgb(0 0 0 / 52%);
+  transform: translate(-50%, -100%);
+}
+
+.festivalShiftMenu.below {
+  transform: translate(-50%, 0);
+}
+
+.festivalShiftMenu::after {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  width: 14px;
+  height: 14px;
+  border-right: 1px solid #5d5d5d;
+  border-bottom: 1px solid #5d5d5d;
+  background: #1f1f1f;
+  content: "";
+  transform: translate(-50%, -7px) rotate(45deg);
+}
+
+.festivalShiftMenu.below::after {
+  top: auto;
+  bottom: 100%;
+  border: 0;
+  border-top: 1px solid #5d5d5d;
+  border-left: 1px solid #5d5d5d;
+  transform: translate(-50%, 7px) rotate(45deg);
+}
+
+.festivalShiftMenuHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid rgb(255 255 255 / 20%);
+  padding-bottom: 9px;
+}
+
+.festivalShiftMenuHeader > div {
+  display: grid;
+  gap: 3px;
+}
+
+.festivalShiftMenuHeader strong {
+  font-size: 18px;
+}
+
+.festivalShiftMenuHeader span {
+  color: rgb(255 255 255 / 72%);
+  font-size: 14px;
+}
+
+.festivalShiftMenuHeader > button {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 36px;
+  place-items: center;
+  border: 0;
+  border-radius: 8px;
+  background: rgb(255 255 255 / 10%);
+  color: #fff;
+  cursor: pointer;
+}
+
+.festivalShiftMenuHeader svg {
+  width: 20px;
+  height: 20px;
+}
+
+.festivalShiftCandidates {
+  display: grid;
+  max-height: min(240px, 34vh);
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  overflow-y: auto;
+  padding-top: 11px;
+}
+
+.festivalShiftCandidates button {
+  min-height: 42px;
+  border: 1px solid rgb(255 255 255 / 42%);
+  border-radius: 8px;
+  background: rgb(255 255 255 / 9%);
+  color: #fff;
+  cursor: pointer;
+  font-size: 17px;
+}
+
+.festivalShiftCandidates button:hover,
+.festivalShiftCandidates button:focus-visible {
+  border-color: #ffe277;
+  background: #ffe277;
+  color: #111;
+  outline: none;
+}
+
+.festivalShiftCandidates button:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+
+.festivalShiftMenuMessage {
+  display: flex;
+  min-height: 72px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 0;
+  color: rgb(255 255 255 / 78%);
+  font-size: 15px;
+  text-align: center;
+}
+
+.festivalShiftSpinner {
+  width: 20px;
+  height: 20px;
+  animation: festivalShiftSpin 0.8s linear infinite;
+}
+
+@keyframes festivalShiftSpin {
+  to { transform: rotate(360deg); }
 }
 
 .festivalHandoffNote {
@@ -5703,6 +5879,15 @@ button:focus-visible {
 
   .festivalOwnSummary strong {
     padding: 3px 7px;
+  }
+
+  .festivalEditHint,
+  .festivalShiftStatus {
+    font-size: 12px;
+  }
+
+  .festivalShiftCandidates {
+    grid-template-columns: repeat(3, 1fr);
   }
 
   .festivalShiftTable th,
