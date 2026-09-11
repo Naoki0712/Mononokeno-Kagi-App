@@ -999,13 +999,13 @@ type SchoolFloorShape = {
   stairs?: Array<{ x: number; y: number }>;
   toilets?: Array<{ x: number; y: number }>;
   elevators?: Array<{ x: number; y: number }>;
-  outlines?: string[];
+  outlines?: Array<{ d: string; dashed?: boolean; width?: number }>;
 };
 
 const SCHOOL_FLOORS: SchoolFloorShape[] = [
   {
     floor: "1F",
-    corridor: "M188 22 H222 V92 H372 V128 H342 V238 H236 V270 H190 Z M222 92 H248 V52 H372 V92",
+    corridor: "M188 18 H224 V88 H382 V128 H356 V242 H240 V274 H192 V318 H150 V334 H92 V314 H188 Z M224 88 H250 V50 H382 V88 M356 128 H404 V258 H382 V128",
     rooms: [
       {x:18,y:20,w:46,h:44,label:"手仕上げ",kind:"lab"},
       {x:18,y:64,w:46,h:48,label:"フライス",kind:"lab"},
@@ -1038,11 +1038,18 @@ const SCHOOL_FLOORS: SchoolFloorShape[] = [
     stairs:[{x:205,y:18},{x:355,y:220}],
     toilets:[{x:392,y:54},{x:208,y:108}],
     elevators:[{x:362,y:112}],
-    outlines:["M8 12 H188 V315 H112 V332 H28 V315 H8 Z","M396 12 H484 V330 H404 V314 H396 Z"],
+    outlines:[
+      { d:"M6 12 H188 V316 H150 V334 H92 V316 H26 V304 H6 Z", width:1.6 },
+      { d:"M398 12 H484 V332 H404 V316 H398 Z", width:1.6 },
+      { d:"M70 40 H188 V186 H118 V246 H70 Z", dashed:true },
+      { d:"M118 92 H188 V160 H148 V206 H118 Z", dashed:true },
+      { d:"M150 302 H236 V340 H206 V360 H136 V342 H96 V328", dashed:true },
+      { d:"M236 274 H342 V318 H276 V338 H236 Z", dashed:true },
+    ],
   },
   {
     floor: "2F",
-    corridor: "M178 20 H220 V86 H388 V126 H356 V238 H238 V282 H178 Z M220 86 H256 V48 H388 V86",
+    corridor: "M176 18 H222 V88 H396 V126 H360 V246 H240 V286 H178 V372 H132 V386 H96 V372 H176 Z M222 88 H258 V48 H396 V88 M360 126 H410 V266 H388 V126",
     rooms: [
       {x:18,y:18,w:110,h:54,label:"応用計測室",kind:"lab"},
       {x:18,y:72,w:110,h:34,label:"機器準備室",kind:"lab"},
@@ -1072,11 +1079,17 @@ const SCHOOL_FLOORS: SchoolFloorShape[] = [
     stairs:[{x:197,y:66},{x:364,y:230}],
     toilets:[{x:230,y:104},{x:400,y:60}],
     elevators:[{x:366,y:130}],
-    outlines:["M6 10 H132 V374 H8 Z","M406 12 H482 V342 H410 Z"],
+    outlines:[
+      { d:"M6 10 H132 V374 H94 V390 H34 V374 H8 Z", width:1.6 },
+      { d:"M406 12 H482 V344 H448 V364 H410 Z", width:1.6 },
+      { d:"M0 72 H18 V292 H0 Z", width:1.4 },
+      { d:"M128 334 H178 V382 H128 Z", width:1.4 },
+      { d:"M238 282 H358 V338 H318 V358 H238 Z", width:1.4 },
+    ],
   },
   {
     floor: "3F",
-    corridor: "M176 20 H220 V88 H392 V126 H358 V242 H236 V286 H176 Z M220 88 H258 V48 H392 V88",
+    corridor: "M174 18 H222 V88 H398 V126 H362 V248 H238 V290 H176 V386 H128 V404 H94 V386 H174 Z M222 88 H258 V48 H398 V88 M362 126 H410 V260 H388 V126",
     rooms: [
       {x:18,y:20,w:110,h:54,label:"機器分析室",kind:"lab"},
       {x:18,y:74,w:110,h:34,label:"分析準備室",kind:"lab"},
@@ -1109,11 +1122,16 @@ const SCHOOL_FLOORS: SchoolFloorShape[] = [
     stairs:[{x:197,y:67},{x:368,y:242}],
     toilets:[{x:230,y:104},{x:398,y:64}],
     elevators:[{x:382,y:154}],
-    outlines:["M6 12 H132 V416 H8 Z","M410 12 H484 V386 H412 Z"],
+    outlines:[
+      { d:"M8 12 H132 V416 H96 V432 H34 V416 H8 Z", width:1.6 },
+      { d:"M410 12 H484 V386 H448 V404 H412 Z", width:1.6 },
+      { d:"M128 360 H176 V414 H128 Z", width:1.3 },
+      { d:"M238 290 H360 V342 H320 V364 H238 Z", width:1.3 },
+    ],
   },
   {
     floor: "4F",
-    corridor: "M162 22 H210 V88 H398 V126 H366 V250 H226 V292 H162 Z M210 88 H252 V48 H398 V88",
+    corridor: "M160 20 H212 V90 H404 V128 H370 V254 H228 V296 H162 V388 H112 V404 H74 V388 H160 Z M212 90 H252 V48 H404 V90 M370 128 H414 V266 H392 V128",
     rooms: [
       {x:18,y:26,w:92,h:28,label:"暗室",kind:"lab",small:true},
       {x:18,y:54,w:92,h:48,label:"レイアウト室",kind:"lab"},
@@ -1142,11 +1160,17 @@ const SCHOOL_FLOORS: SchoolFloorShape[] = [
     stairs:[{x:184,y:69},{x:370,y:246}],
     toilets:[{x:226,y:104},{x:400,y:62}],
     elevators:[{x:382,y:154}],
-    outlines:["M6 14 H116 V388 H10 Z","M412 14 H486 V388 H414 Z"],
+    outlines:[
+      { d:"M4 12 H116 V390 H82 V410 H26 V390 H6 Z", width:1.6 },
+      { d:"M412 12 H486 V390 H450 V410 H414 Z", width:1.6 },
+      { d:"M0 4 H164 V18 H116 V390 H82 V410 H26 V390 H0 Z", width:1.35 },
+      { d:"M228 296 H370 V348 H328 V370 H228 Z", width:1.35 },
+      { d:"M414 330 H486 V420 H450 V438 H414 Z", width:1.35 },
+    ],
   },
   {
     floor: "5F",
-    corridor: "M206 70 H390 V108 H354 V240 H238 V276 H206 Z M206 70 H242 V48 H390 V70",
+    corridor: "M204 66 H394 V108 H358 V244 H240 V280 H206 V316 H176 V334 H140 V316 H204 Z M204 66 H242 V48 H394 V66 M358 108 H414 V252 H390 V108",
     rooms: [
       {x:246,y:22,w:92,h:70,label:"物理実験室",kind:"general"},
       {x:338,y:54,w:42,h:38,label:"物理\n準備室",kind:"general",small:true},
@@ -1164,11 +1188,17 @@ const SCHOOL_FLOORS: SchoolFloorShape[] = [
     stairs:[{x:236,y:118},{x:370,y:278}],
     toilets:[{x:400,y:66}],
     elevators:[{x:390,y:142}],
-    outlines:["M94 60 H206 V414 H96 Z","M412 14 H486 V424 H414 Z"],
+    outlines:[
+      { d:"M92 58 H206 V416 H160 V438 H104 V416 H94 Z", width:1.6 },
+      { d:"M412 12 H486 V426 H450 V446 H414 Z", width:1.6 },
+      { d:"M0 44 H92 V58 H206 V416 H160 V438 H104 V416 H42 V402 H0 Z", width:1.35 },
+      { d:"M206 280 H358 V336 H320 V360 H206 Z", width:1.35 },
+      { d:"M414 360 H486 V446 H452 V462 H414 Z", width:1.35 },
+    ],
   },
   {
     floor: "6F",
-    corridor: "M246 90 H456 V130 H418 V176 H246 Z",
+    corridor: "M244 88 H462 V130 H422 V178 H244 Z M462 88 H488 V144 H462 Z",
     rooms: [
       {x:250,y:18,w:88,h:72,label:"美術室",kind:"general"},
       {x:338,y:50,w:46,h:40,label:"美術\n準備室",kind:"general",small:true},
@@ -1179,7 +1209,11 @@ const SCHOOL_FLOORS: SchoolFloorShape[] = [
     ],
     stairs:[{x:256,y:126}],
     elevators:[{x:472,y:142}],
-    outlines:["M238 8 H518 V186 H490 V338 H450 V186 H238 Z"],
+    outlines:[
+      { d:"M236 8 H518 V186 H492 V430 H450 V186 H236 Z", width:1.7 },
+      { d:"M214 4 H236 V186 H244 V208 H214 Z", width:1.3 },
+      { d:"M450 178 H492 V430 H468 V452 H446 V430", width:1.3 },
+    ],
   },
 ];
 
@@ -1220,7 +1254,16 @@ function SchoolFloorSvg({ floor }: { floor: SchoolFloorShape }) {
   return (
     <svg className="schoolFloorSvg" viewBox="0 0 520 430" role="img" aria-label={`${floor.floor}校内図`}>
       <path d={floor.corridor} fill="#d8d8d0" stroke="#6b6b6b" strokeWidth="1.3" />
-      {floor.outlines?.map((d, i) => <path key={i} d={d} fill="none" stroke="#bdbdbd" strokeWidth="1.6" />)}
+      {floor.outlines?.map((outline, i) => (
+        <path
+          key={i}
+          d={outline.d}
+          fill="none"
+          stroke="#bdbdbd"
+          strokeWidth={outline.width ?? 1.6}
+          strokeDasharray={outline.dashed ? "4 4" : undefined}
+        />
+      ))}
       {floor.rooms.map((room) => <SchoolRoomRect key={`${room.x}-${room.y}-${room.label}`} room={room} />)}
       {floor.stairs?.map((p, i) => (
         <g key={`s-${i}`} transform={`translate(${p.x} ${p.y})`} stroke="#3e3e3e" strokeWidth="1">
@@ -1247,10 +1290,6 @@ function SchoolFloorSvg({ floor }: { floor: SchoolFloorShape }) {
 function SchoolDiagram() {
   return (
     <div className="schoolDiagram schoolDiagramAllFloors" aria-label="校内1階から6階までの案内図">
-      <div className="schoolMapHeading">
-        <strong>校内ご案内</strong>
-        <span>SCHOOL INFORMATION</span>
-      </div>
       <div className="schoolFloorGrid schoolFloorGridSvg">
         {SCHOOL_FLOORS.map((floor) => (
           <section className="schoolFloorPanel schoolFloorPanelSvg" key={floor.floor}>
