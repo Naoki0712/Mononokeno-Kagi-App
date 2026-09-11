@@ -4887,25 +4887,24 @@ button:focus-visible {
 }
 
 .schoolDiagramAllFloors {
-  min-width: 980px;
-  min-height: 780px;
-  padding: 28px 34px 38px;
-  border: 0;
+  min-width: 1060px;
+  min-height: 1120px;
+  padding: 26px 32px 42px;
   background: #050505;
   color: var(--white);
 }
 
 .schoolMapHeading {
   display: flex;
-  align-items: end;
+  align-items: flex-end;
   justify-content: space-between;
   gap: 24px;
-  border-bottom: 3px solid rgb(255 255 255 / 78%);
-  padding: 0 6px 12px;
+  border-bottom: 3px solid rgb(255 255 255 / 82%);
+  padding: 0 4px 12px;
 }
 
 .schoolMapHeading strong {
-  font-size: clamp(28px, 3.4vw, 52px);
+  font-size: clamp(32px, 3.4vw, 56px);
   font-weight: 400;
   line-height: 1;
   letter-spacing: 0.03em;
@@ -4913,173 +4912,58 @@ button:focus-visible {
 
 .schoolMapHeading span {
   font-family: Inter, Arial, sans-serif;
-  font-size: clamp(12px, 1.35vw, 22px);
+  font-size: clamp(13px, 1.2vw, 21px);
   letter-spacing: 0.24em;
 }
 
-.schoolFloorGrid {
+.schoolFloorGridSvg {
   display: grid;
-  grid-template-columns: repeat(2, minmax(420px, 1fr));
-  gap: 34px 42px;
-  padding-top: 26px;
+  grid-template-columns: repeat(2, minmax(480px, 1fr));
+  gap: 26px 34px;
+  padding-top: 24px;
 }
 
-.schoolFloorPanel {
+.schoolFloorPanelSvg {
   position: relative;
-  min-height: 285px;
+  min-height: 330px;
 }
 
-.schoolFloorPanel h3 {
-  margin: 0 0 12px;
+.schoolFloorPanelSvg h3 {
+  margin: 0 0 6px;
   font-family: Inter, Arial, sans-serif;
-  font-size: 44px;
+  font-size: 46px;
   font-weight: 600;
   line-height: 1;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.035em;
 }
 
-.schoolFloorPlan {
-  display: grid;
-  grid-template-columns: 30% 1fr 24%;
-  min-height: 230px;
-  align-items: stretch;
-}
-
-.schoolWing,
-.schoolTopRooms,
-.schoolCenterRooms {
-  display: flex;
-  flex-direction: column;
-}
-
-.schoolWing span,
-.schoolTopRooms span,
-.schoolCenterRooms span {
-  display: grid;
-  min-height: 28px;
-  place-items: center;
-  border: 1px solid #525252;
-  background: #edf4f8;
-  color: #1d1d1d;
-  padding: 3px 5px;
-  font-family: "Noto Sans JP", "Yu Gothic", sans-serif;
-  font-size: 10px;
-  line-height: 1.15;
-  text-align: center;
-}
-
-.schoolWingLeft span {
-  background: #edf4f8;
-}
-
-.schoolTopRooms span,
-.schoolCenterRooms span {
-  background: #f6e8e9;
-}
-
-.schoolWingRight span {
-  background: #e3f2ea;
-}
-
-.schoolCore {
-  position: relative;
-  display: grid;
-  grid-template-rows: auto 34px 1fr;
-  align-content: start;
-}
-
-.schoolTopRooms {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
-.schoolCorridorShape {
-  position: relative;
-  min-height: 34px;
-  border-top: 1px solid #696969;
-  border-bottom: 1px solid #696969;
-  background: #d9d9d2;
-}
-
-.schoolCorridorShape::before {
-  position: absolute;
-  right: 13%;
-  bottom: -58px;
-  width: 34px;
-  height: 58px;
-  border-right: 2px solid #7a7a7a;
-  border-bottom: 2px solid #7a7a7a;
-  content: "";
-}
-
-.schoolStairMark,
-.schoolLiftMark {
-  position: absolute;
-  top: 50%;
-  color: #3d3d3d;
-  font-family: Arial, sans-serif;
-  font-style: normal;
-  transform: translateY(-50%);
-}
-
-.schoolStairMark {
-  left: 8%;
-  font-size: 24px;
-  letter-spacing: -0.18em;
-}
-
-.schoolLiftMark {
-  right: 7%;
-  font-size: 21px;
-}
-
-.schoolCenterRooms {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  align-content: start;
-}
-
-.schoolWingRight {
-  border-left: 8px solid #d9d9d2;
-}
-
-.schoolCurrentRoom {
-  position: relative;
-  background: #e6002d !important;
-  color: #ffffff !important;
-  border-color: #ff6680 !important;
-  font-weight: 700;
-}
-
-.schoolCurrentRoom small {
+.schoolFloorSvg {
   display: block;
-  margin-top: 2px;
-  font-size: 7px;
-  font-weight: 400;
-  letter-spacing: 0.03em;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+  background: transparent;
+}
+
+.schoolFloorSvg text {
+  paint-order: stroke fill;
+  stroke: transparent;
 }
 
 @media (max-width: 680px) {
   .schoolDiagramAllFloors {
-    min-width: 860px;
-    min-height: 760px;
-    padding: 22px 26px 32px;
+    min-width: 980px;
+    min-height: 1080px;
+    padding: 22px 26px 36px;
   }
 
-  .schoolFloorGrid {
-    grid-template-columns: repeat(2, minmax(380px, 1fr));
-    gap: 28px 32px;
+  .schoolFloorGridSvg {
+    grid-template-columns: repeat(2, minmax(450px, 1fr));
+    gap: 22px 28px;
   }
 
-  .schoolFloorPanel h3 {
-    font-size: 38px;
-  }
-
-  .schoolWing span,
-  .schoolTopRooms span,
-  .schoolCenterRooms span {
-    min-height: 26px;
-    font-size: 9px;
+  .schoolFloorPanelSvg h3 {
+    font-size: 40px;
   }
 }
 
