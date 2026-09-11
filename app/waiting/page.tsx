@@ -30,7 +30,7 @@ export default function WaitingLanguagePage() {
         <h1 id="language-title">言語を選択してください</h1>
         <p lang="en">Please select your language.</p>
         <div className={styles.languageActions}>
-          <Link href="/waiting/jp/">日本語</Link>
+          <Link href="/waiting/ja/">日本語</Link>
           <Link href="/waiting/en/" lang="en">English</Link>
         </div>
       </section>

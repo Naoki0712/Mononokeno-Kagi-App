@@ -10,7 +10,7 @@ import styles from "./waiting.module.css";
 const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 const DEVICE_TOKEN_KEY = "mononoke-waiting-device-token";
 
-type Locale = "jp" | "en";
+type Locale = "ja" | "en";
 type TicketStatus = "waiting" | "called" | "redeemed" | "expired" | "cancelled";
 
 type Ticket = {
@@ -57,7 +57,7 @@ type Copy = {
 };
 
 const COPY: Record<Locale, Copy> = {
-  jp: {
+  ja: {
     title: "整理券",
     ticketName: "整理券",
     numberSuffix: "番",
@@ -118,7 +118,7 @@ const COPY: Record<Locale, Copy> = {
     cancelled: "This ticket is no longer valid",
     retry: "Reload",
     switchLabel: "日本語ページ",
-    switchHref: "/waiting/jp/",
+    switchHref: "/waiting/ja/",
     switchText: "日本語",
   },
 };
@@ -256,7 +256,7 @@ export function WaitingVisitor({
         {copy.switchText}
       </Link>
 
-      {phase === "loading" && <LoadingState label={locale === "jp" ? "読み込み中…" : "Loading…"} />}
+      {phase === "loading" && <LoadingState label={locale === "ja" ? "読み込み中…" : "Loading…"} />}
 
       {phase === "error" && (
         <StatusCard
@@ -437,13 +437,13 @@ function CalledView({
         {qrUrl ? (
           <Image
             src={qrUrl}
-            alt={locale === "jp" ? "受付確認用QRコード" : "Reception QR code"}
+            alt={locale === "ja" ? "受付確認用QRコード" : "Reception QR code"}
             width={720}
             height={720}
             unoptimized
           />
         ) : (
-          <span>{locale === "jp" ? "QRコードを作成中…" : "Preparing QR code…"}</span>
+          <span>{locale === "ja" ? "QRコードを作成中…" : "Preparing QR code…"}</span>
         )}
       </div>
       <strong className={styles.showQrText}>{copy.showAtReception}</strong>
@@ -519,7 +519,7 @@ function getOrCreateDeviceToken() {
 }
 
 function formatTime(value: string, locale: Locale) {
-  return new Intl.DateTimeFormat(locale === "jp" ? "ja-JP" : "en-US", {
+  return new Intl.DateTimeFormat(locale === "ja" ? "ja-JP" : "en-US", {
     timeZone: "Asia/Tokyo",
     hour: "2-digit",
     minute: "2-digit",
