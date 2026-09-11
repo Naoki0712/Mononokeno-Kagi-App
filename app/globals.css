@@ -5529,28 +5529,126 @@ button:focus-visible {
 
 
 /* Festival-day schedule and ticket-machine-style primary action. */
-.dailyScheduleDay {
+.festivalSchedule {
   position: absolute;
-  top: 10.5%;
-  left: clamp(350px, 34vw, 520px);
-  z-index: 21;
-  border-radius: 7px;
-  padding: 8px 17px;
-  background: var(--white);
-  color: var(--black);
-  font-size: var(--font-main);
-  line-height: 1;
+  inset: 18% clamp(18px, 4vw, 64px) 92px;
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+  gap: 12px;
 }
 
-.dailyScheduleEmpty {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: min(900px, calc(100% - 64px));
+.festivalDayTabs {
+  display: flex;
+  flex: 0 0 auto;
+  justify-content: center;
+  gap: 10px;
+}
+
+.festivalDayTabs button {
+  min-width: 132px;
+  border: 1px solid rgb(255 255 255 / 48%);
+  border-radius: 999px;
+  padding: 8px 22px;
+  background: rgb(0 0 0 / 46%);
   color: var(--white);
-  font-size: var(--font-main);
+  cursor: pointer;
+  font-size: clamp(19px, 1.7vw, 28px);
+}
+
+.festivalDayTabs button.active {
+  background: var(--white);
+  color: var(--black);
+}
+
+.festivalOwnSummary {
+  display: flex;
+  min-height: 42px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  margin: 0;
+  font-size: clamp(15px, 1.25vw, 21px);
   text-align: center;
-  transform: translate(-50%, -50%);
+}
+
+.festivalOwnSummary strong {
+  border-radius: 8px;
+  padding: 5px 10px;
+  background: #ffe277;
+  color: #111;
+  white-space: nowrap;
+}
+
+.festivalTableScroll {
+  min-height: 0;
+  flex: 1 1 auto;
+  overflow: auto;
+  border: 1px solid rgb(255 255 255 / 48%);
+  border-radius: 14px;
+  background: rgb(0 0 0 / 42%);
+}
+
+.festivalShiftTable {
+  width: 100%;
+  min-width: 820px;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.festivalShiftTable th,
+.festivalShiftTable td {
+  border-right: 1px solid rgb(255 255 255 / 28%);
+  border-bottom: 1px solid rgb(255 255 255 / 28%);
+  padding: 11px 10px;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.festivalShiftTable thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: #f1f1f1;
+  color: #111;
+  font-size: clamp(15px, 1.3vw, 21px);
+  font-weight: 400;
+}
+
+.festivalShiftTable thead th:first-child,
+.festivalShiftTable tbody th {
+  width: 17%;
+}
+
+.festivalShiftTable tbody th {
+  background: rgb(255 255 255 / 9%);
+  font-size: clamp(15px, 1.25vw, 20px);
+  font-weight: 400;
+  white-space: nowrap;
+}
+
+.festivalShiftTable td strong {
+  display: inline-block;
+  margin: 3px 5px;
+  border-radius: 6px;
+  padding: 3px 5px;
+  font-size: clamp(15px, 1.2vw, 20px);
+  font-weight: 400;
+}
+
+.festivalShiftTable td strong.isSelf {
+  background: #ffe277;
+  color: #111;
+  box-shadow: 0 0 0 2px #fff;
+}
+
+.festivalHandoffNote {
+  flex: 0 0 auto;
+  margin: 0;
+  color: rgb(255 255 255 / 74%);
+  font-size: clamp(13px, 1.05vw, 17px);
+  text-align: center;
 }
 
 .scheduleReceptionEntry {
@@ -5567,14 +5665,36 @@ button:focus-visible {
     line-height: 1.25;
   }
 
-  .dailyScheduleDay {
-    top: 8.5%;
-    left: auto;
-    right: 16px;
-    padding: 7px 12px;
+  .festivalSchedule {
+    inset: 15.5% 12px 82px;
+    gap: 8px;
   }
 
-  .dailyScheduleEmpty {
-    width: calc(100% - 32px);
+  .festivalDayTabs button {
+    min-width: 108px;
+    padding: 7px 14px;
+    font-size: 18px;
+  }
+
+  .festivalOwnSummary {
+    min-height: 34px;
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 14px;
+    text-align: left;
+  }
+
+  .festivalOwnSummary strong {
+    padding: 3px 7px;
+  }
+
+  .festivalShiftTable th,
+  .festivalShiftTable td {
+    padding: 8px 7px;
+  }
+
+  .festivalHandoffNote {
+    font-size: 12px;
   }
 }
