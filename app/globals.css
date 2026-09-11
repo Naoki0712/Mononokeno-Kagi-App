@@ -2222,6 +2222,7 @@ button:focus-visible {
 .waitingVisitorBoard {
   display: grid;
   grid-template-columns: 700fr 665fr;
+  gap: clamp(18px, 2.2vw, 36px);
   overflow: hidden;
 }
 
@@ -2382,6 +2383,24 @@ button:focus-visible {
   cursor: pointer;
   font-family: var(--font-cine);
   font-size: var(--font-detail);
+}
+
+.waitingResetButton {
+  width: min(100%, 340px);
+  margin-top: 14px;
+  border: 1px solid #ff8a80;
+  border-radius: 8px;
+  padding: 13px 18px;
+  background: transparent;
+  color: #ffb4ad;
+  cursor: pointer;
+  font-family: var(--font-cine);
+  font-size: var(--font-detail);
+}
+
+.waitingResetButton:disabled {
+  cursor: wait;
+  opacity: .55;
 }
 
 .waitingTicketMenu {

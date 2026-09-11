@@ -47,6 +47,7 @@ type Copy = {
   windowEnds: (time: string) => string;
   redeemed: string;
   redeemedDetail: string;
+  issueAgain: string;
   expired: string;
   expiredDetail: string;
   cancelled: string;
@@ -81,6 +82,7 @@ const COPY: Record<Locale, Copy> = {
     windowEnds: (time) => `${time}までにお越しください`,
     redeemed: "受付済みです",
     redeemedDetail: "受付スタッフの案内に従ってお進みください。",
+    issueAgain: "もう一度発券する",
     expired: "受付時間を過ぎました",
     expiredDetail: "4階 HR2-2の受付スタッフへお声がけください。",
     cancelled: "この整理券は利用できません",
@@ -90,7 +92,7 @@ const COPY: Record<Locale, Copy> = {
     switchText: "English",
   },
   en: {
-    title: "Timed Entry",
+    title: "Numbered Ticket",
     ticketName: "Ticket",
     numberSuffix: "",
     waitNow: (minutes) => `Current wait: about ${minutes} min`,
@@ -113,6 +115,7 @@ const COPY: Record<Locale, Copy> = {
     windowEnds: (time) => `Please arrive by ${time}`,
     redeemed: "Checked in",
     redeemedDetail: "Please follow the reception staff's directions.",
+    issueAgain: "Get another ticket",
     expired: "Your call window has ended",
     expiredDetail: "Please speak to a reception staff member at HR 2-2.",
     cancelled: "This ticket is no longer valid",
@@ -151,7 +154,7 @@ export function WaitingVisitor({
   const [deviceToken, setDeviceToken] = useState("");
   const [ticket, setTicket] = useState<Ticket | null>(null);
   const [enabled, setEnabled] = useState(false);
-  const [waitMinutes, setWaitMinutes] = useState(60);
+  const [waitMinutes, setWaitMinutes] = useState(8);
   const [phase, setPhase] = useState<"loading" | "ready" | "error">("loading");
   const [issueError, setIssueError] = useState("");
   const [issuing, setIssuing] = useState(false);
@@ -173,7 +176,7 @@ export function WaitingVisitor({
         return;
       }
       setEnabled(Boolean(data.enabled));
-      setWaitMinutes(Number(data.estimated_wait_minutes ?? 60));
+      setWaitMinutes(Number(data.estimated_wait_minutes ?? 8));
       setTicket(data.has_ticket ? ticketFromResponse(data) : null);
       setPhase("ready");
     },
@@ -222,12 +225,12 @@ export function WaitingVisitor({
     };
   }, [deviceToken, ticket?.status]);
 
-  const issueTicket = async () => {
-    if (!client || !deviceToken) return;
+  const issueTicket = async (token = deviceToken) => {
+    if (!client || !token) return;
     setIssuing(true);
     setIssueError("");
     const { data, error } = await client.rpc("waiting_issue_ticket", {
-      p_device_token: deviceToken,
+      p_device_token: token,
     });
     setIssuing(false);
     if (error || !data?.ok) {
@@ -242,9 +245,17 @@ export function WaitingVisitor({
     setTicket(ticketFromResponse(data));
   };
 
+  const issueAnotherTicket = async () => {
+    const token = createDeviceToken();
+    window.localStorage.setItem(DEVICE_TOKEN_KEY, token);
+    setDeviceToken(token);
+    setTicket(null);
+    await issueTicket(token);
+  };
+
   return (
     <main
-      className={`${styles.waitingPage} waitingViewport`}
+      className={`${styles.waitingPage} ${locale === "en" ? styles.englishPage : ""} waitingViewport`}
       lang={locale === "en" ? "en" : "ja"}
     >
       <BrandHeader />
@@ -273,12 +284,15 @@ export function WaitingVisitor({
           ticket={ticket}
           now={now}
           qrUrl={qrUrl}
+          issuing={issuing}
+          onIssueAgain={() => void issueAnotherTicket()}
         />
       )}
 
       {phase === "ready" && !ticket && enabled && (
         <IssueView
           copy={copy}
+          locale={locale}
           waitMinutes={waitMinutes}
           issuing={issuing}
           issueError={issueError}
@@ -323,12 +337,14 @@ function LoadingState({ label }: { label: string }) {
 
 function IssueView({
   copy,
+  locale,
   waitMinutes,
   issuing,
   issueError,
   onIssue,
 }: {
   copy: Copy;
+  locale: Locale;
   waitMinutes: number;
   issuing: boolean;
   issueError: string;
@@ -336,7 +352,7 @@ function IssueView({
 }) {
   return (
     <section className={styles.issueView} aria-labelledby="waiting-title">
-      <h1 id="waiting-title">{copy.title}</h1>
+      <h1 id="waiting-title" className={locale === "en" ? styles.englishTitle : ""}>{copy.title}</h1>
       <div className={styles.waitBubble}>{copy.waitNow(waitMinutes)}</div>
       <button
         className={styles.issueButton}
@@ -362,12 +378,16 @@ function TicketView({
   ticket,
   now,
   qrUrl,
+  issuing,
+  onIssueAgain,
 }: {
   copy: Copy;
   locale: Locale;
   ticket: Ticket;
   now: number;
   qrUrl: string;
+  issuing: boolean;
+  onIssueAgain: () => void;
 }) {
   if (ticket.status === "called") {
     return (
@@ -376,7 +396,16 @@ function TicketView({
   }
 
   if (ticket.status === "redeemed") {
-    return <StatusCard number={ticket.ticketNumber} title={copy.redeemed} detail={copy.redeemedDetail} />;
+    return (
+      <StatusCard
+        number={ticket.ticketNumber}
+        title={copy.redeemed}
+        detail={copy.redeemedDetail}
+        actionLabel={issuing ? copy.issuing : copy.issueAgain}
+        onAction={onIssueAgain}
+        actionDisabled={issuing}
+      />
+    );
   }
 
   if (ticket.status === "expired") {
@@ -477,6 +506,7 @@ function StatusCard({
   tone = "default",
   actionLabel,
   onAction,
+  actionDisabled = false,
 }: {
   number?: number;
   title: string;
@@ -484,6 +514,7 @@ function StatusCard({
   tone?: "default" | "warning";
   actionLabel?: string;
   onAction?: () => void;
+  actionDisabled?: boolean;
 }) {
   return (
     <section className={`${styles.statusCard} ${tone === "warning" ? styles.warningCard : ""}`}>
@@ -491,7 +522,7 @@ function StatusCard({
       <h1>{title}</h1>
       {detail && <p>{detail}</p>}
       {actionLabel && onAction && (
-        <button type="button" onClick={onAction}>{actionLabel}</button>
+        <button type="button" disabled={actionDisabled} onClick={onAction}>{actionLabel}</button>
       )}
     </section>
   );
@@ -512,10 +543,14 @@ function ticketFromResponse(data: Record<string, unknown>): Ticket {
 function getOrCreateDeviceToken() {
   const existing = window.localStorage.getItem(DEVICE_TOKEN_KEY);
   if (existing && /^[0-9a-f]{64}$/.test(existing)) return existing;
-  const bytes = window.crypto.getRandomValues(new Uint8Array(32));
-  const token = Array.from(bytes, (value) => value.toString(16).padStart(2, "0")).join("");
+  const token = createDeviceToken();
   window.localStorage.setItem(DEVICE_TOKEN_KEY, token);
   return token;
+}
+
+function createDeviceToken() {
+  const bytes = window.crypto.getRandomValues(new Uint8Array(32));
+  return Array.from(bytes, (value) => value.toString(16).padStart(2, "0")).join("");
 }
 
 function formatTime(value: string, locale: Locale) {

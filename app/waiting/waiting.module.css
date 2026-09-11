@@ -32,6 +32,11 @@
   z-index: 1;
 }
 
+.englishPage,
+.englishPage * {
+  font-family: Helvetica, Inter, Arial, sans-serif;
+}
+
 .brandHeader {
   position: absolute;
   top: 38px;
@@ -142,6 +147,11 @@
   font-weight: 400;
   letter-spacing: 0.06em;
   line-height: 0.95;
+}
+
+.issueView .englishTitle {
+  font-size: clamp(48px, 10vw, 92px);
+  letter-spacing: 0.015em;
 }
 
 .waitBubble {
@@ -412,6 +422,11 @@
   width: 100%;
   margin-top: 34px;
   font-family: inherit;
+}
+
+.statusCard button:disabled {
+  cursor: wait;
+  opacity: .68;
 }
 
 .warningCard {

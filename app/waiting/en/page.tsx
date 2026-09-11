@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { WaitingVisitor } from "../waiting-visitor";
 
 export const metadata: Metadata = {
-  title: "Timed Entry Ticket | Mononoke no Kagi",
+  title: "Numbered Ticket | Mononoke no Kagi",
   description: "Get a timed entry ticket and check your estimated call time.",
 };
 
