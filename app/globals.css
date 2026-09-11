@@ -518,6 +518,22 @@ button:focus-visible {
   background: transparent;
 }
 
+.festivalPlan {
+  position: relative;
+  width: min(92%, 900px);
+  max-height: 100%;
+  margin: 0 auto;
+  aspect-ratio: 930 / 850;
+  user-select: none;
+}
+
+.festivalPlan svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
 .fallbackPlan {
   position: relative;
   width: min(58%, 620px);
