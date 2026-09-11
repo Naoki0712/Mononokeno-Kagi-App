@@ -8,6 +8,7 @@ import QRCode from "qrcode";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ScheduleScreen } from "./schedule-screen";
 import { WaitingConsole } from "./waiting-console";
+import { ClassroomViewer } from "./classroom-viewer";
 
 const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 
@@ -168,6 +169,9 @@ export function KioskApp({
             title="マップを開く"
             onBack={() => setScreen("home")}
           />
+          <div className="mapEmbed">
+            <ClassroomViewer minimal />
+          </div>
         </section>
       )}
 
