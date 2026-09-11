@@ -30,7 +30,7 @@ export function ClassroomViewer({ minimal = false }: { minimal?: boolean }) {
   const mountRef = useRef<HTMLDivElement>(null);
   const actionsRef = useRef<ViewerActions | null>(null);
   const [status, setStatus] = useState<ViewerStatus>("loading");
-  const [viewMode, setViewMode] = useState<ViewMode>("space");
+  const [viewMode, setViewMode] = useState<ViewMode>("plan");
   const [mapScope, setMapScope] = useState<MapScope>("nearby");
   const [planResetKey, setPlanResetKey] = useState(0);
   const [schoolResetKey, setSchoolResetKey] = useState(0);
@@ -582,170 +582,90 @@ export function ClassroomViewer({ minimal = false }: { minimal?: boolean }) {
       addCurtain("z", -3.34, -2.12, 3.72, 2.14, 2.68);
       addCurtain("z", 2.12, 3.34, 3.72, 2.14, 2.68);
 
-      // 設計図を90度回転して教室座標へ合わせた、大まかな3室構成。
-      // 机のある部分は2段積み、机より上はカーテン、開口部は床までカーテン。
-      addPartition(
-        "z",
-        0,
-        [
-          [-2.45, -1.9],
-          [-1.25, -0.45],
-          [0.05, 1.05],
-          [1.6, 3.15],
-        ],
-        [
-          [-1.9, -1.25],
-          [-0.45, 0.05],
-          [1.05, 1.6],
-        ],
-      );
+      // 9/11の俯瞰図を基準にした文化祭当日の迷路配置。
+      // 座標は左上を (0,0)、右下を (8,7) とした平面仕様を3D座標へ変換する。
+      const mapToRoom = (mapX: number, mapY: number) => ({
+        x: mapX - ROOM_WIDTH / 2,
+        z: mapY - ROOM_DEPTH / 2,
+      });
 
-      addPartition(
-        "x",
-        0.95,
-        [
-          [-3.55, -2.25],
-          [-1.4, -0.2],
-        ],
-        [[-2.25, -1.4]],
-      );
-
-      addPartition(
-        "x",
-        -1.75,
-        [
-          [-3.55, -2.05],
-          [-1.25, -0.2],
-        ],
-        [[-2.05, -1.25]],
-      );
-
-      addPartition(
-        "x",
-        -0.55,
-        [
-          [0.2, 1.2],
-          [1.95, 2.65],
-        ],
-        [[1.2, 1.95]],
-      );
-
-      addPartition(
-        "x",
-        1.45,
-        [
-          [0.2, 1.3],
-          [2, 2.65],
-        ],
-        [[1.3, 2]],
-      );
-
-      // 廊下側には入口から出口までの退避通路を残す。
-      addPartition(
-        "z",
-        2.72,
-        [
-          [-1.65, -0.25],
-          [0.4, 1.45],
-        ],
-        [[-0.25, 0.4]],
-      );
-
-      // 9/11撮影の現況写真をもとに、当日の装飾・小道具を追加。
-      // 血糊風の新聞・紙は薄い板として壁面や仕切りに貼り、段ボールや机、
-      // 植物、墓標風の小道具を立体物として配置する。
-      const addPaperPatch = (
-        x: number,
-        y: number,
-        z: number,
-        width: number,
-        height: number,
-        rotationY = 0,
+      const addMappedDeskWall = (
+        x1: number,
+        y1: number,
+        x2: number,
+        y2: number,
       ) => {
-        addBox(width, height, 0.018, x, y, z, paperMaterial, false, rotationY);
-        addBox(width * 0.24, height * 0.08, 0.022, x - width * 0.17, y + height * 0.12, z - 0.012, darkMaterial, false, rotationY);
-        addBox(width * 0.18, height * 0.07, 0.022, x + width * 0.2, y - height * 0.15, z - 0.012, darkMaterial, false, rotationY);
+        const a = mapToRoom(x1, y1);
+        const b = mapToRoom(x2, y2);
+        if (Math.abs(y2 - y1) < 0.01) {
+          addDeskWall("x", a.x, b.x, a.z);
+          addCurtain("x", a.x, b.x, a.z, 1.08, 2.6);
+        } else {
+          addDeskWall("z", a.z, b.z, a.x);
+          addCurtain("z", a.z, b.z, a.x, 1.08, 2.6);
+        }
       };
 
-      // 廊下側の新聞装飾。
       [
-        [3.68, 1.48, -2.05, 0.78, 0.56],
-        [3.68, 1.3, -0.65, 0.68, 0.52],
-        [3.68, 1.58, 0.72, 0.82, 0.6],
-        [3.68, 1.32, 2.05, 0.72, 0.5],
-      ].forEach(([x, y, z, width, height]) => addPaperPatch(x, y, z, width, height, Math.PI / 2));
+        [1.2, 1.8, 1.2, 4.3],
+        [1.2, 4.3, 2.0, 4.3],
+        [2.6, 1.6, 5.0, 1.6],
+        [5.2, 1.6, 5.2, 4.0],
+        [3.3, 3.0, 3.3, 5.6],
+        [4.5, 4.0, 4.5, 5.5],
+        [4.2, 5.5, 6.0, 5.5],
+        [6.5, 1.8, 6.5, 6.0],
+        [7.6, 2.0, 7.6, 6.1],
+      ].forEach(([x1, y1, x2, y2]) => addMappedDeskWall(x1, y1, x2, y2));
 
-      // 迷路内の新聞・紙装飾。
-      [
-        [-0.05, 1.42, -2.1, 0.72, 0.52, Math.PI / 2],
-        [-0.05, 1.66, -0.8, 0.62, 0.46, Math.PI / 2],
-        [-0.05, 1.34, 0.7, 0.7, 0.54, Math.PI / 2],
-        [-0.05, 1.58, 2.15, 0.8, 0.58, Math.PI / 2],
-        [-1.7, 1.5, 0.1, 0.7, 0.5, 0],
-        [1.42, 1.45, 0.25, 0.66, 0.48, 0],
-      ].forEach(([x, y, z, width, height, rotationY]) =>
-        addPaperPatch(x, y, z, width, height, rotationY),
-      );
-
-      // 入口付近の受付・物置で見える机と段ボール。
-      addDesk(2.9, -2.55, 0, 0);
-      addBox(0.72, 0.55, 0.62, 2.85, 0.275, -3.05, woodMaterial);
-      addBox(0.55, 0.42, 0.48, 2.35, 0.21, -2.92, woodMaterial);
-      addBox(0.44, 0.36, 0.4, 3.26, 0.18, -2.72, woodMaterial);
-
-      // 出口寄りの作業机・小道具置き。
-      addDesk(2.72, 2.6, 0, 0);
-      addBox(0.72, 0.18, 0.45, 2.75, 0.66, 2.6, paperMaterial);
-      addBox(0.48, 0.5, 0.42, 3.32, 0.25, 2.78, woodMaterial);
-
-      // 写真にある墓標風オブジェクト。
-      addBox(0.46, 0.86, 0.12, -2.85, 0.43, -0.75, paperMaterial);
-      addBox(0.62, 0.08, 0.42, -2.85, 0.04, -0.75, stageMaterial);
-      addBox(0.28, 0.05, 0.025, -2.85, 0.58, -0.68, darkMaterial, false);
-      addBox(0.22, 0.05, 0.025, -2.85, 0.43, -0.68, darkMaterial, false);
-
-      // 人魂エリア付近の黄色い点状装飾。
-      [
-        [-1.65, 1.45, -2.55],
-        [-1.65, 1.75, -2.35],
-        [-1.65, 1.2, -2.15],
-        [-1.65, 1.62, -1.95],
-        [-1.65, 1.32, -1.72],
-      ].forEach(([x, y, z]) => {
-        const glowMaterial = new THREE.MeshStandardMaterial({
-          color: 0xc6a54a,
-          emissive: 0x5d4310,
-          emissiveIntensity: 0.28,
-          roughness: 0.7,
-        });
-        addCylinder(0.055, 0.025, x, y, z, [Math.PI / 2, 0, 0], glowMaterial, 18);
-      });
-
-      // 写真にある蔓・葉のかたまりを簡略化。
-      const foliageMaterial = new THREE.MeshStandardMaterial({
-        color: 0x355338,
-        roughness: 0.96,
+      // 確認済みのギミック3か所を青いマーカーで示す。
+      const gimmickMaterial = new THREE.MeshStandardMaterial({
+        color: 0x2357ff,
+        emissive: 0x0b1b66,
+        emissiveIntensity: 0.42,
+        roughness: 0.58,
       });
       [
-        [-1.1, 0.25, -0.45],
-        [-0.75, 0.2, -0.3],
-        [-1.35, 0.22, 0.15],
-        [0.7, 0.24, 0.95],
-        [0.95, 0.2, 1.18],
-      ].forEach(([x, y, z], index) => {
-        addCylinder(0.035, 0.75 + (index % 2) * 0.18, x, y + 0.35, z, [0.2, 0, index % 2 ? 0.32 : -0.28], foliageMaterial, 10);
-        addBox(0.18, 0.06, 0.11, x + 0.12, y + 0.5, z, foliageMaterial, false, index % 2 ? 0.5 : -0.5);
-        addBox(0.16, 0.06, 0.1, x - 0.1, y + 0.3, z + 0.08, foliageMaterial, false, index % 2 ? -0.4 : 0.4);
+        [1.3, 2.3],
+        [5.0, 2.2],
+        [5.9, 5.5],
+      ].forEach(([mapX, mapY]) => {
+        const p = mapToRoom(mapX, mapY);
+        addCylinder(0.18, 0.18, p.x, 0.18, p.z, [0, 0, 0], gimmickMaterial, 24);
       });
 
-      // 01 / 02 / 03 の札を白いプレートとして位置だけ再現。
+      // スタンプ台（緑）。俯瞰図どおり左下寄りに配置。
+      const stampMaterial = new THREE.MeshStandardMaterial({
+        color: 0x24c45a,
+        emissive: 0x0c4b22,
+        emissiveIntensity: 0.32,
+        roughness: 0.65,
+      });
+      {
+        const p = mapToRoom(0.8, 6.3);
+        addDesk(p.x, p.z, 0, -0.35);
+        addCylinder(0.11, 0.08, p.x, 0.64, p.z, [0, 0, 0], stampMaterial, 20);
+      }
+
+      // 受付と待機イスは教室外の来場者側に簡略表示。
+      addDesk(0.9, 4.15, 0, 0);
+      [-1.7, -1.1, -0.5, 0.1, 1.5].forEach((x) => {
+        addBox(0.42, 0.45, 0.42, x, 0.225, 4.12, frameMaterial);
+      });
+
+      // スタッフ専用出入口は赤い床マーカーで位置を示す。
+      const staffMarkerMaterial = new THREE.MeshStandardMaterial({
+        color: 0xe23b3b,
+        emissive: 0x5b1010,
+        emissiveIntensity: 0.35,
+        roughness: 0.68,
+      });
       [
-        [-0.08, 1.95, -2.35, Math.PI / 2],
-        [-0.08, 1.95, -0.35, Math.PI / 2],
-        [-0.08, 1.95, 1.65, Math.PI / 2],
-      ].forEach(([x, y, z, rotationY]) => {
-        addBox(0.34, 0.24, 0.025, x, y, z, paperMaterial, false, rotationY);
-        addBox(0.18, 0.035, 0.03, x, y, z - 0.018, darkMaterial, false, rotationY);
+        [2.6, 0.18],
+        [5.2, 0.18],
+      ].forEach(([mapX, mapY]) => {
+        const p = mapToRoom(mapX, mapY);
+        addBox(0.52, 0.035, 0.28, p.x, 0.02, p.z, staffMarkerMaterial, false);
       });
 
       // 写真に見える配置を参考にした天井の蛍光灯。
@@ -1077,34 +997,110 @@ function SchoolDiagram() {
 }
 
 function PlanDiagram() {
+  const deskWalls = [
+    [1.2, 1.8, 1.2, 4.3],
+    [1.2, 4.3, 2.0, 4.3],
+    [2.6, 1.6, 5.0, 1.6],
+    [5.2, 1.6, 5.2, 4.0],
+    [3.3, 3.0, 3.3, 5.6],
+    [4.5, 4.0, 4.5, 5.5],
+    [4.2, 5.5, 6.0, 5.5],
+    [6.5, 1.8, 6.5, 6.0],
+    [7.6, 2.0, 7.6, 6.1],
+  ] as const;
+
+  const sx = (x: number) => 90 + x * 90;
+  const sy = (y: number) => 70 + y * 90;
+
   return (
-    <div className="fallbackPlan">
-      <span className="fallbackBoard">前方黒板</span>
-      <span className="fallbackStage">黒板前の段差</span>
-      <span className="fallbackProjector">プロジェクター</span>
-      <span className="fallbackWindows">5区画の窓</span>
-      <span className="fallbackAircon fallbackAirconFront">空調</span>
-      <span className="fallbackAircon fallbackAirconRear">空調</span>
-      <span className="fallbackDoor fallbackEntrance">入口</span>
-      <span className="fallbackDoor fallbackExit">出口</span>
-      <span className="fallbackCorridorWindows">廊下側窓</span>
-      <span className="fallbackHandrail">二段手すり</span>
-      <span className="fallbackRearBoard">後方黒板</span>
-      <span className="fallbackNotice fallbackNoticeLeft">掲示板</span>
-      <span className="fallbackNotice fallbackNoticeRight">掲示板</span>
-      <span className="fallbackLocker">ロッカー</span>
-      <span className="fallbackWindowCurtain">遮光カーテン</span>
-      <span className="fallbackDeskWall fallbackDeskWallMain" />
-      <span className="fallbackDeskWall fallbackDeskWallRoom2" />
-      <span className="fallbackDeskWall fallbackDeskWallRoom3" />
-      <span className="fallbackDeskWall fallbackDeskWallRoom1A" />
-      <span className="fallbackDeskWall fallbackDeskWallRoom1B" />
-      <span className="fallbackDeskWall fallbackDeskWallPassage" />
-      <span className="fallbackRoomLabel fallbackRoom1">No.1</span>
-      <span className="fallbackRoomLabel fallbackRoom2">No.2</span>
-      <span className="fallbackRoomLabel fallbackRoom3">No.3</span>
-      <span className="fallbackRetirePassage">退避通路</span>
-      <span className="fallbackSize">8m × 7m</span>
+    <div className="festivalPlan">
+      <svg viewBox="0 0 930 850" role="img" aria-label="もののけの鍵 教室内平面マップ">
+        <defs>
+          <pattern id="deskHatch" width="12" height="12" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+            <rect width="12" height="12" fill="#171717" />
+            <line x1="0" y1="0" x2="0" y2="12" stroke="#737373" strokeWidth="3" />
+          </pattern>
+          <marker id="flowArrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+            <path d="M0,0 L8,4 L0,8 z" fill="#f0f0f0" />
+          </marker>
+        </defs>
+
+        <rect x="90" y="70" width="720" height="630" rx="8" fill="#080808" stroke="#ffffff" strokeWidth="4" />
+        <text x="450" y="43" textAnchor="middle" fill="#d8d8d8" fontSize="28">ロッカー側</text>
+        <text x="850" y="385" textAnchor="middle" fill="#d8d8d8" fontSize="28" transform="rotate(90 850 385)">黒板側</text>
+
+        {deskWalls.map(([x1, y1, x2, y2], index) => (
+          <line
+            key={index}
+            x1={sx(x1)}
+            y1={sy(y1)}
+            x2={sx(x2)}
+            y2={sy(y2)}
+            stroke="url(#deskHatch)"
+            strokeWidth="34"
+            strokeLinecap="square"
+          />
+        ))}
+
+        <g aria-label="スタッフ専用出入口" fill="#e33a3a">
+          <rect x={sx(2.6) - 28} y="62" width="56" height="28" rx="5" />
+          <rect x={sx(5.2) - 28} y="62" width="56" height="28" rx="5" />
+        </g>
+        <text x={sx(2.6)} y="55" textAnchor="middle" fill="#ff8b8b" fontSize="17">スタッフのみ</text>
+        <text x={sx(5.2)} y="55" textAnchor="middle" fill="#ff8b8b" fontSize="17">スタッフのみ</text>
+
+        <g aria-label="ギミック" fill="#2458ff" stroke="#9db3ff" strokeWidth="4">
+          <circle cx={sx(1.3)} cy={sy(2.3)} r="18" />
+          <circle cx={sx(5.0)} cy={sy(2.2)} r="18" />
+          <circle cx={sx(5.9)} cy={sy(5.5)} r="18" />
+        </g>
+        <text x={sx(1.3)+26} y={sy(2.3)+6} fill="#9db3ff" fontSize="18">ギミック</text>
+        <text x={sx(5.0)+26} y={sy(2.2)+6} fill="#9db3ff" fontSize="18">ギミック</text>
+        <text x={sx(5.9)+26} y={sy(5.5)+6} fill="#9db3ff" fontSize="18">ギミック</text>
+
+        <g aria-label="スタンプ台">
+          <rect x={sx(0.8)-28} y={sy(6.3)-20} width="56" height="40" rx="5" fill="#202020" stroke="#8e8e8e" strokeWidth="3" transform={`rotate(-20 ${sx(0.8)} ${sy(6.3)})`} />
+          <circle cx={sx(0.8)} cy={sy(6.3)} r="10" fill="#28c85e" />
+          <text x={sx(0.8)+36} y={sy(6.3)+6} fill="#67ec91" fontSize="18">スタンプ台</text>
+        </g>
+
+        <g aria-label="入口と出口">
+          <path d={`M ${sx(7.1)} 700 v -28`} stroke="#ffffff" strokeWidth="5" markerEnd="url(#flowArrow)" />
+          <text x={sx(7.1)} y="737" textAnchor="middle" fill="#ffffff" fontSize="25">入口</text>
+          <path d={`M ${sx(1.0)} 672 v 28`} stroke="#ffffff" strokeWidth="5" markerEnd="url(#flowArrow)" />
+          <text x={sx(1.0)} y="737" textAnchor="middle" fill="#ffffff" fontSize="25">出口</text>
+        </g>
+
+        <g aria-label="受付">
+          <rect x="470" y="735" width="135" height="54" rx="8" fill="#171717" stroke="#ffffff" strokeWidth="3" />
+          <text x="537" y="769" textAnchor="middle" fill="#ffffff" fontSize="25">受付</text>
+        </g>
+
+        <g aria-label="待機イス" fill="none" stroke="#cfcfcf" strokeWidth="4">
+          {[300, 355, 410, 465, 650].map((x) => <circle key={x} cx={x} cy="760" r="19" />)}
+        </g>
+        <text x="380" y="814" textAnchor="middle" fill="#bdbdbd" fontSize="19">待機イス</text>
+
+        <path
+          d={`M ${sx(7.1)} 675 C ${sx(6.9)} 610, ${sx(6.2)} 590, ${sx(5.9)} ${sy(5.5)}
+              C ${sx(5.1)} ${sy(4.8)}, ${sx(5.8)} ${sy(3.3)}, ${sx(5.0)} ${sy(2.2)}
+              C ${sx(4.2)} ${sy(1.1)}, ${sx(2.1)} ${sy(1.0)}, ${sx(1.3)} ${sy(2.3)}
+              C ${sx(0.8)} ${sy(3.5)}, ${sx(0.7)} ${sy(5.4)}, ${sx(0.8)} ${sy(6.3)}
+              C ${sx(0.9)} 665, ${sx(1.0)} 676, ${sx(1.0)} 696`}
+          fill="none"
+          stroke="#f0f0f0"
+          strokeOpacity="0.34"
+          strokeWidth="5"
+          strokeDasharray="10 12"
+          markerEnd="url(#flowArrow)"
+        />
+
+        <g transform="translate(690 760)">
+          <circle cx="0" cy="0" r="7" fill="#e33a3a" /><text x="14" y="6" fill="#d6d6d6" fontSize="17">スタッフ出入口</text>
+          <circle cx="0" cy="28" r="7" fill="#2458ff" /><text x="14" y="34" fill="#d6d6d6" fontSize="17">ギミック</text>
+          <circle cx="0" cy="56" r="7" fill="#28c85e" /><text x="14" y="62" fill="#d6d6d6" fontSize="17">スタンプ台</text>
+        </g>
+      </svg>
     </div>
   );
 }
