@@ -41,6 +41,33 @@ type MemberScheduleRow = {
 type GroupName = "Class-leader" | "Layout" | "Gimmick" | "Decoration" | "Gadget" | "Story";
 type BaseName = "Signboard" | "Yokai" | "PR";
 
+type FestivalRole = "受付" | "スタッフ" | "チェックアウト";
+type FestivalShift = {
+  time: string;
+  reception: readonly string[];
+  staff: readonly string[];
+  checkout: readonly string[];
+};
+
+const FESTIVAL_SHIFTS = {
+  土曜日: [
+    { time: "8:55〜10:05", reception: ["2205", "2212"], staff: ["2203", "2209", "2221", "2230", "2231", "2232"], checkout: ["2233"] },
+    { time: "9:55〜11:05", reception: ["2206", "2228"], staff: ["2216", "2222", "2224", "2225", "2226", "2227"], checkout: ["2218"] },
+    { time: "10:55〜12:05", reception: ["2207", "2231"], staff: ["2205", "2209", "2212", "2221", "2230", "2233"], checkout: ["2232"] },
+    { time: "12:55〜14:05", reception: ["2203", "2214"], staff: ["2218", "2219", "2220", "2221", "2227", "2228"], checkout: ["2212"] },
+    { time: "13:55〜15:05", reception: ["2213", "2230"], staff: ["2205", "2209", "2216", "2222", "2229", "2233"], checkout: ["2207"] },
+  ],
+  日曜日: [
+    { time: "8:55〜10:05", reception: ["2208", "2226"], staff: ["2206", "2213", "2219", "2224", "2228", "2229"], checkout: ["2205"] },
+    { time: "9:55〜11:05", reception: ["2218", "2227"], staff: ["2203", "2207", "2213", "2214", "2222", "2225"], checkout: ["2228"] },
+    { time: "10:55〜12:05", reception: ["2216", "2219"], staff: ["2206", "2208", "2214", "2225", "2226", "2229"], checkout: ["2224"] },
+    { time: "12:55〜14:05", reception: ["2222", "2233"], staff: ["2206", "2213", "2218", "2219", "2229", "2230"], checkout: ["2208"] },
+    { time: "13:55〜15:05", reception: ["2224", "2225"], staff: ["2203", "2207", "2214", "2216", "2220", "2227"], checkout: ["2226"] },
+  ],
+} as const satisfies Record<string, readonly FestivalShift[]>;
+
+type FestivalDay = keyof typeof FESTIVAL_SHIFTS;
+
 const WEEKDAYS = ["日", "月", "火", "水", "木", "金", "土"];
 const AVAILABILITY_MONTH = new Date(2026, 7, 1);
 const AVAILABILITY_SELECTABLE_START = "2026-08-18";
@@ -72,11 +99,6 @@ const MANUALS = [
     description: "妖怪ベースが作成するにあたって各部屋のヘルプをします",
   },
   {
-    title: "🟧看板ベース",
-    schedule: "8/26（水）～",
-    description: "廊下で宣伝する看板を作ります",
-  },
-  {
     title: "🟦妖怪ベース",
     schedule: "8/5（水）、8/6（木）",
     description: "妖怪にまつわるクイズを考えます",
@@ -85,11 +107,6 @@ const MANUALS = [
       "自分の01～03のわりあては詳細の予定→🟦妖怪ベースをタップすると確認できます",
       "不明点への対応、見た目のイメージ作り・確認についてはクラスLINEの「8/5（水）以降の全体の動き」を確認してください",
     ],
-  },
-  {
-    title: "🟥PR動画・ポスターベース",
-    schedule: "（日程はDiscordを参照）",
-    description: "PR動画・廊下に貼るポスターを作ります",
   },
 ] as const;
 const YOKAI_TEAMS = [
@@ -110,8 +127,10 @@ const YOKAI_TEAMS = [
 export function ScheduleScreen({
   onBack,
   onWaiting,
+  classmateId = "",
 }: ScheduleScreenProps) {
   const [view, setView] = useState<"schedule" | "manuals">("schedule");
+  const [festivalDay, setFestivalDay] = useState<FestivalDay>("土曜日");
 
   if (view === "manuals") {
     return <ManualList onBack={() => setView("schedule")} />;
@@ -119,10 +138,7 @@ export function ScheduleScreen({
 
   return (
     <SimpleSchedulePage onBack={onBack} title="スケジュールを確認する">
-      <span className="dailyScheduleDay">1日目</span>
-      <div className="dailyScheduleEmpty" role="status">
-        まだ予定が登録されていません。
-      </div>
+      <FestivalSchedule day={festivalDay} onDayChange={setFestivalDay} classmateId={classmateId} />
       <button
         type="button"
         className="scheduleAvailabilityEntry scheduleReceptionEntry"
@@ -140,6 +156,77 @@ export function ScheduleScreen({
         <span>マニュアル一覧</span>
       </button>
     </SimpleSchedulePage>
+  );
+}
+
+function FestivalSchedule({
+  day,
+  onDayChange,
+  classmateId,
+}: {
+  day: FestivalDay;
+  onDayChange: (day: FestivalDay) => void;
+  classmateId: string;
+}) {
+  const roleEntries: Array<{ role: FestivalRole; key: keyof Pick<FestivalShift, "reception" | "staff" | "checkout"> }> = [
+    { role: "受付", key: "reception" },
+    { role: "スタッフ", key: "staff" },
+    { role: "チェックアウト", key: "checkout" },
+  ];
+  const shifts: readonly FestivalShift[] = FESTIVAL_SHIFTS[day];
+  const ownAssignments = shifts.flatMap((shift) =>
+    roleEntries
+      .filter(({ key }) => shift[key].includes(classmateId))
+      .map(({ role }) => `${shift.time} ${role}`),
+  );
+
+  return (
+    <div className="festivalSchedule">
+      <div className="festivalDayTabs" role="tablist" aria-label="文化祭の日程">
+        {(Object.keys(FESTIVAL_SHIFTS) as FestivalDay[]).map((option) => (
+          <button
+            type="button"
+            role="tab"
+            aria-selected={day === option}
+            className={day === option ? "active" : ""}
+            onClick={() => onDayChange(option)}
+            key={option}
+          >
+            {option}
+          </button>
+        ))}
+      </div>
+
+      {classmateId && (
+        <p className="festivalOwnSummary">
+          <strong>ID {classmateId}</strong>
+          <span>{ownAssignments.length ? ownAssignments.join(" ／ ") : `${day}の担当はありません`}</span>
+        </p>
+      )}
+
+      <div className="festivalTableScroll">
+        <table className="festivalShiftTable">
+          <thead>
+            <tr><th>時間</th><th>受付（2人）</th><th>スタッフ（6人）</th><th>チェックアウト（1人）</th></tr>
+          </thead>
+          <tbody>
+            {shifts.map((shift) => (
+              <tr key={shift.time}>
+                <th scope="row">{shift.time}</th>
+                {roleEntries.map(({ role, key }) => (
+                  <td data-role={role} key={key}>
+                    {shift[key].map((id) => (
+                      <strong className={id === classmateId ? "isSelf" : ""} key={id}>{id}</strong>
+                    ))}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <p className="festivalHandoffNote">表示時刻には、前後5分の引き継ぎ・移動時間を含みます。</p>
+    </div>
   );
 }
 
@@ -442,7 +529,7 @@ function scheduleCategories(rows: MemberScheduleRow[]) {
   rows.forEach((row) => {
     const entries: Array<{ kind: "group" | "base"; name: GroupName | BaseName | null }> = [];
     if (row.group_name) entries.push({ kind: "group", name: row.group_name });
-    if (row.base_name) entries.push({ kind: "base", name: row.base_name });
+    if (row.base_name === "Yokai") entries.push({ kind: "base", name: row.base_name });
     entries.forEach(({ kind, name }) => {
       const key = `${kind}:${name ?? "unset"}`;
       const current = categories.get(key) ?? { kind, name, ids: [], isSelf: false };
@@ -718,7 +805,7 @@ function baseColor(base: BaseName) {
 }
 
 function baseLabel(base: BaseName) {
-  return { Signboard: "看板ベース", Yokai: "妖怪ベース", PR: "PR動画・ポスターベース" }[base];
+  return base === "Yokai" ? "妖怪ベース" : "";
 }
 
 function categoryOrder(kind: "group" | "base", name: GroupName | BaseName | null) {
