@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 export default function JapaneseWaitingPage() {
   return (
     <WaitingVisitor
-      locale="jp"
+      locale="ja"
       supabaseUrl={
         process.env.NEXT_PUBLIC_SUPABASE_PROXY_URL ??
         process.env.SUPABASE_URL ??
