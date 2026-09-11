@@ -21,6 +21,7 @@ type ViewerActions = {
 
 type ViewMode = "space" | "plan";
 type MapScope = "nearby" | "school";
+type PlanVariant = "gimmick" | "staff";
 
 const ROOM_WIDTH = 8;
 const ROOM_DEPTH = 7;
@@ -32,6 +33,7 @@ export function ClassroomViewer({ minimal = false }: { minimal?: boolean }) {
   const [status, setStatus] = useState<ViewerStatus>("loading");
   const [viewMode, setViewMode] = useState<ViewMode>("plan");
   const [mapScope, setMapScope] = useState<MapScope>("nearby");
+  const [planVariant, setPlanVariant] = useState<PlanVariant>("gimmick");
   const [planResetKey, setPlanResetKey] = useState(0);
   const [schoolResetKey, setSchoolResetKey] = useState(0);
 
@@ -841,15 +843,38 @@ export function ClassroomViewer({ minimal = false }: { minimal?: boolean }) {
 
       {status === "fallback" && mapScope === "nearby" && (
         <div className="viewerFallback" role="img" aria-label="机の仕切りとカーテンを含む教室の平面図">
-          <PlanDiagram />
+          <PlanDiagram variant={planVariant} />
           <p>この環境では3D表示を利用できないため、平面図を表示しています。</p>
         </div>
       )}
 
       {status === "ready" && mapScope === "nearby" && viewMode === "plan" && (
         <div className="viewerPlanMode" role="img" aria-label="教室の平面図">
-          <InteractiveDiagram key={`plan-${planResetKey}`} label="教室の平面図。ホイールまたはピンチで拡大縮小できます">
-            <PlanDiagram />
+          <div className="planVariantToggle" role="tablist" aria-label="配置の切り替え">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={planVariant === "gimmick"}
+              className={planVariant === "gimmick" ? "isActive" : ""}
+              onClick={() => setPlanVariant("gimmick")}
+            >
+              ギミック配置
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={planVariant === "staff"}
+              className={planVariant === "staff" ? "isActive" : ""}
+              onClick={() => setPlanVariant("staff")}
+            >
+              スタッフ配置
+            </button>
+          </div>
+          <InteractiveDiagram
+            key={`plan-${planVariant}-${planResetKey}`}
+            label={`${planVariant === "gimmick" ? "ギミック" : "スタッフ"}配置の教室平面図。ホイールまたはピンチで拡大縮小できます`}
+          >
+            <PlanDiagram variant={planVariant} />
           </InteractiveDiagram>
         </div>
       )}
@@ -997,111 +1022,25 @@ function SchoolDiagram() {
   );
 }
 
-function PlanDiagram() {
-  const deskWalls = [
-    [1.2, 1.8, 1.2, 4.3],
-    [1.2, 4.3, 2.0, 4.3],
-    [2.6, 1.6, 5.0, 1.6],
-    [5.2, 1.6, 5.2, 4.0],
-    [3.3, 3.0, 3.3, 5.6],
-    [4.5, 4.0, 4.5, 5.5],
-    [4.2, 5.5, 6.0, 5.5],
-    [6.5, 1.8, 6.5, 6.0],
-    [7.6, 2.0, 7.6, 6.1],
-  ] as const;
+const CLASSROOM_PLAN_IMAGES: Record<PlanVariant, string> = {
+  gimmick: "/maps/classroom-map-gimmick.jpg",
+  staff: "/maps/classroom-map-staff.jpg",
+};
 
-  const sx = (x: number) => 90 + x * 90;
-  const sy = (y: number) => 70 + y * 90;
+function PlanDiagram({ variant }: { variant: PlanVariant }) {
+  const isGimmick = variant === "gimmick";
+  const alt = isGimmick
+    ? "教室内マップ（ギミック配置）"
+    : "教室内マップ（スタッフ配置）";
 
   return (
-    <div className="festivalPlan">
-      <svg viewBox="0 0 930 850" role="img" aria-label="もののけの鍵 教室内平面マップ">
-        <defs>
-          <pattern id="deskHatch" width="12" height="12" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
-            <rect width="12" height="12" fill="#171717" />
-            <line x1="0" y1="0" x2="0" y2="12" stroke="#737373" strokeWidth="3" />
-          </pattern>
-          <marker id="flowArrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
-            <path d="M0,0 L8,4 L0,8 z" fill="#f0f0f0" />
-          </marker>
-        </defs>
-
-        <rect x="90" y="70" width="720" height="630" rx="8" fill="#080808" stroke="#ffffff" strokeWidth="4" />
-        <text x="450" y="43" textAnchor="middle" fill="#d8d8d8" fontSize="28">ロッカー側</text>
-        <text x="850" y="385" textAnchor="middle" fill="#d8d8d8" fontSize="28" transform="rotate(90 850 385)">黒板側</text>
-
-        {deskWalls.map(([x1, y1, x2, y2], index) => (
-          <line
-            key={index}
-            x1={sx(x1)}
-            y1={sy(y1)}
-            x2={sx(x2)}
-            y2={sy(y2)}
-            stroke="url(#deskHatch)"
-            strokeWidth="34"
-            strokeLinecap="square"
-          />
-        ))}
-
-        <g aria-label="スタッフ専用出入口" fill="#e33a3a">
-          <rect x={sx(2.6) - 28} y="62" width="56" height="28" rx="5" />
-          <rect x={sx(5.2) - 28} y="62" width="56" height="28" rx="5" />
-        </g>
-        <text x={sx(2.6)} y="55" textAnchor="middle" fill="#ff8b8b" fontSize="17">スタッフのみ</text>
-        <text x={sx(5.2)} y="55" textAnchor="middle" fill="#ff8b8b" fontSize="17">スタッフのみ</text>
-
-        <g aria-label="ギミック" fill="#2458ff" stroke="#9db3ff" strokeWidth="4">
-          <circle cx={sx(1.3)} cy={sy(2.3)} r="18" />
-          <circle cx={sx(5.0)} cy={sy(2.2)} r="18" />
-          <circle cx={sx(5.9)} cy={sy(5.5)} r="18" />
-        </g>
-        <text x={sx(1.3)+26} y={sy(2.3)+6} fill="#9db3ff" fontSize="18">ギミック</text>
-        <text x={sx(5.0)+26} y={sy(2.2)+6} fill="#9db3ff" fontSize="18">ギミック</text>
-        <text x={sx(5.9)+26} y={sy(5.5)+6} fill="#9db3ff" fontSize="18">ギミック</text>
-
-        <g aria-label="スタンプ台">
-          <rect x={sx(0.8)-28} y={sy(6.3)-20} width="56" height="40" rx="5" fill="#202020" stroke="#8e8e8e" strokeWidth="3" transform={`rotate(-20 ${sx(0.8)} ${sy(6.3)})`} />
-          <circle cx={sx(0.8)} cy={sy(6.3)} r="10" fill="#28c85e" />
-          <text x={sx(0.8)+36} y={sy(6.3)+6} fill="#67ec91" fontSize="18">スタンプ台</text>
-        </g>
-
-        <g aria-label="入口と出口">
-          <path d={`M ${sx(7.1)} 700 v -28`} stroke="#ffffff" strokeWidth="5" markerEnd="url(#flowArrow)" />
-          <text x={sx(7.1)} y="737" textAnchor="middle" fill="#ffffff" fontSize="25">入口</text>
-          <path d={`M ${sx(1.0)} 672 v 28`} stroke="#ffffff" strokeWidth="5" markerEnd="url(#flowArrow)" />
-          <text x={sx(1.0)} y="737" textAnchor="middle" fill="#ffffff" fontSize="25">出口</text>
-        </g>
-
-        <g aria-label="受付">
-          <rect x="470" y="735" width="135" height="54" rx="8" fill="#171717" stroke="#ffffff" strokeWidth="3" />
-          <text x="537" y="769" textAnchor="middle" fill="#ffffff" fontSize="25">受付</text>
-        </g>
-
-        <g aria-label="待機イス" fill="none" stroke="#cfcfcf" strokeWidth="4">
-          {[300, 355, 410, 465, 650].map((x) => <circle key={x} cx={x} cy="760" r="19" />)}
-        </g>
-        <text x="380" y="814" textAnchor="middle" fill="#bdbdbd" fontSize="19">待機イス</text>
-
-        <path
-          d={`M ${sx(7.1)} 675 C ${sx(6.9)} 610, ${sx(6.2)} 590, ${sx(5.9)} ${sy(5.5)}
-              C ${sx(5.1)} ${sy(4.8)}, ${sx(5.8)} ${sy(3.3)}, ${sx(5.0)} ${sy(2.2)}
-              C ${sx(4.2)} ${sy(1.1)}, ${sx(2.1)} ${sy(1.0)}, ${sx(1.3)} ${sy(2.3)}
-              C ${sx(0.8)} ${sy(3.5)}, ${sx(0.7)} ${sy(5.4)}, ${sx(0.8)} ${sy(6.3)}
-              C ${sx(0.9)} 665, ${sx(1.0)} 676, ${sx(1.0)} 696`}
-          fill="none"
-          stroke="#f0f0f0"
-          strokeOpacity="0.34"
-          strokeWidth="5"
-          strokeDasharray="10 12"
-          markerEnd="url(#flowArrow)"
-        />
-
-        <g transform="translate(690 760)">
-          <circle cx="0" cy="0" r="7" fill="#e33a3a" /><text x="14" y="6" fill="#d6d6d6" fontSize="17">スタッフ出入口</text>
-          <circle cx="0" cy="28" r="7" fill="#2458ff" /><text x="14" y="34" fill="#d6d6d6" fontSize="17">ギミック</text>
-          <circle cx="0" cy="56" r="7" fill="#28c85e" /><text x="14" y="62" fill="#d6d6d6" fontSize="17">スタンプ台</text>
-        </g>
-      </svg>
+    <div className={`classroomPlanImageFrame ${isGimmick ? "classroomPlanImageFrameCrop" : ""}`} aria-label={alt}>
+      <img
+        className="classroomPlanImage"
+        src={CLASSROOM_PLAN_IMAGES[variant]}
+        alt={alt}
+        draggable={false}
+      />
     </div>
   );
 }
