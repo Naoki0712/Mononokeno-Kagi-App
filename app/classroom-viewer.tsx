@@ -982,16 +982,94 @@ function InteractiveDiagram({
 }
 
 function SchoolDiagram() {
+  const floors = [
+    {
+      floor: "1F",
+      left: ["手仕上げ", "フライス", "研削", "管理室", "材料試験室", "NC工作機械室", "ロボット制御室"],
+      center: ["溶接", "機械工場", "旋盤", "流体原動機室", "104ゼミ室", "103ゼミ室", "102ゼミ室", "101ゼミ室"],
+      top: ["サイエンススクエア", "教育相談室", "保健室", "展示資料室"],
+      right: ["小会議室", "校長室", "経営企画室（受付）", "主事室", "駐輪場"],
+    },
+    {
+      floor: "2F",
+      left: ["応用計測室", "機器準備室", "制御機器室", "第2製図室", "製図準備室", "第1製図室", "第2CAD室", "第1CAD室"],
+      center: ["第2電気工作室", "工作準備室", "第1電気工作室", "204ゼミ室", "203ゼミ室", "202ゼミ室", "201ゼミ室"],
+      top: ["視聴覚室", "司書室", "書庫", "図書室"],
+      right: ["放送室", "スタジオ", "印刷室", "職員室", "大会議室"],
+    },
+    {
+      floor: "3F",
+      left: ["機器分析室", "分析準備室", "環境分析室", "材料化学室", "物化準備室", "物理化学室", "化学分析室", "製造準備室", "化学製造室"],
+      center: ["305講義室", "バイオ化学室", "304ゼミ室", "303ゼミ室", "302ゼミ室", "301ゼミ室"],
+      top: ["調理室", "家庭科準備室", "被服室", "和室", "自販機コーナー", "生徒会室"],
+      right: ["HR3-6", "HR3-5", "HR3-4", "HR3-3", "HR3-2", "HR3-1"],
+    },
+    {
+      floor: "4F",
+      left: ["暗室", "レイアウト室", "第2情報デザイン室", "デザイン準備室", "第1情報デザイン室", "情報準備室", "情報技術室"],
+      center: ["405講義室", "404ゼミ室", "403ゼミ室", "402ゼミ室", "401ゼミ室"],
+      top: ["コンピュータ室", "401講義室", "LL教室", "LL管理室", "教材室（1）", "教材室（2）"],
+      right: ["HR2-6", "HR2-5", "HR2-4", "HR2-3", "HR2-2", "HR2-1"],
+    },
+    {
+      floor: "5F",
+      left: ["物理実験室", "物理準備室", "化学準備室", "化学実験室"],
+      center: ["HR1-6", "HR1-5"],
+      top: [],
+      right: ["生物実験室", "生物準備室", "HR1-4", "HR1-3", "HR1-2", "HR1-1"],
+    },
+    {
+      floor: "6F",
+      left: ["美術室", "美術準備室", "音楽準備室", "音楽室"],
+      center: ["601講義室", "602講義室"],
+      top: [],
+      right: [],
+    },
+  ] as const;
+
   return (
-    <div className="schoolDiagram">
-      <strong className="schoolFloorLabel">4階</strong>
-      <span className="schoolRoom schoolRoomA">教室</span>
-      <span className="schoolRoom schoolRoomCurrent">2-2<br />もののけの鍵</span>
-      <span className="schoolRoom schoolRoomB">教室</span>
-      <span className="schoolRoom schoolRoomC">教室</span>
-      <span className="schoolCorridor">廊下</span>
-      <span className="schoolStairs schoolStairsLeft">階段</span>
-      <span className="schoolStairs schoolStairsRight">階段</span>
+    <div className="schoolDiagram schoolDiagramAllFloors" aria-label="校内1階から6階までの案内図">
+      <div className="schoolMapHeading">
+        <strong>校内ご案内</strong>
+        <span>SCHOOL INFORMATION</span>
+      </div>
+      <div className="schoolFloorGrid">
+        {floors.map((floor) => (
+          <section className="schoolFloorPanel" key={floor.floor} aria-label={`${floor.floor}案内図`}>
+            <h3>{floor.floor}</h3>
+            <div className="schoolFloorPlan">
+              <div className="schoolWing schoolWingLeft">
+                {floor.left.map((room) => <span key={room}>{room}</span>)}
+              </div>
+
+              <div className="schoolCore">
+                <div className="schoolTopRooms">
+                  {floor.top.map((room) => <span key={room}>{room}</span>)}
+                </div>
+                <div className="schoolCorridorShape" aria-hidden="true">
+                  <i className="schoolStairMark">≋</i>
+                  <i className="schoolLiftMark">↕</i>
+                </div>
+                <div className="schoolCenterRooms">
+                  {floor.center.map((room) => <span key={room}>{room}</span>)}
+                </div>
+              </div>
+
+              <div className="schoolWing schoolWingRight">
+                {floor.right.map((room) => (
+                  <span
+                    key={room}
+                    className={room === "HR2-2" ? "schoolCurrentRoom" : undefined}
+                  >
+                    {room}
+                    {room === "HR2-2" && <small>もののけの鍵</small>}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </section>
+        ))}
+      </div>
     </div>
   );
 }
