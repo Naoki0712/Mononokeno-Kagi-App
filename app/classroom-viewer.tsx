@@ -1294,6 +1294,15 @@ function SchoolFloorSvg({ floor }: { floor: SchoolFloorShape }) {
           <text x="9" y="13" textAnchor="middle" fontSize="11" fill="#555">↕</text>
         </g>
       ))}
+      {floor.floor === "1F" && (
+        <g aria-label="現在位置">
+          <circle cx="375" cy="226" r="7" fill="#ef233c" />
+          <path d="M420 185 L383 218" stroke="#ef233c" strokeWidth="7" strokeLinecap="square" />
+          <path d="M383 218 L390 203 L399 212 Z" fill="#ef233c" />
+          <text x="332" y="250" fill="#ffffff" fontSize="12" fontWeight="700">現在位置</text>
+          <text x="334" y="261" fill="#ffffff" fontSize="6.5" letterSpacing="1.2">YOU ARE HERE.</text>
+        </g>
+      )}
     </svg>
   );
 }
