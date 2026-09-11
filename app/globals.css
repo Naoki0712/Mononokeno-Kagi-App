@@ -1647,7 +1647,7 @@ button:focus-visible {
 
 .emptyAgenda {
   display: flex;
-  min-height: 330px;
+  min-height: 300px;
   align-items: center;
   justify-content: center;
   flex-direction: column;
@@ -4887,9 +4887,9 @@ button:focus-visible {
 }
 
 .schoolDiagramAllFloors {
-  min-width: 1060px;
-  min-height: 1120px;
-  padding: 26px 32px 42px;
+  min-width: 1240px;
+  min-height: 760px;
+  padding: 22px 28px 34px;
   background: #050505;
   color: var(--white);
 }
@@ -4918,7 +4918,7 @@ button:focus-visible {
 
 .schoolFloorGridSvg {
   display: grid;
-  grid-template-columns: repeat(2, minmax(480px, 1fr));
+  grid-template-columns: repeat(3, minmax(330px, 1fr));
   gap: 26px 34px;
   padding-top: 24px;
 }
@@ -4952,13 +4952,13 @@ button:focus-visible {
 
 @media (max-width: 680px) {
   .schoolDiagramAllFloors {
-    min-width: 980px;
-    min-height: 1080px;
-    padding: 22px 26px 36px;
+    min-width: 1120px;
+    min-height: 760px;
+    padding: 20px 24px 30px;
   }
 
   .schoolFloorGridSvg {
-    grid-template-columns: repeat(2, minmax(450px, 1fr));
+    grid-template-columns: repeat(3, minmax(340px, 1fr));
     gap: 22px 28px;
   }
 
