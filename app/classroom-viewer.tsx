@@ -62,7 +62,7 @@ export function ClassroomViewer({ minimal = false }: { minimal?: boolean }) {
       renderer.toneMappingExposure = 1.1;
       renderer.domElement.setAttribute(
         "aria-label",
-        "窓、固定設備、2段に重ねた机の仕切り、遮光カーテンを含む教室の3Dビューアー",
+        "文化祭当日の写真をもとに、黒い仕切り、血糊風の新聞装飾、植物、小道具、机や箱を再現した教室の3Dビューアー",
       );
       renderer.domElement.setAttribute("role", "img");
       renderer.domElement.tabIndex = 0;
@@ -651,6 +651,103 @@ export function ClassroomViewer({ minimal = false }: { minimal?: boolean }) {
         [[-0.25, 0.4]],
       );
 
+      // 9/11撮影の現況写真をもとに、当日の装飾・小道具を追加。
+      // 血糊風の新聞・紙は薄い板として壁面や仕切りに貼り、段ボールや机、
+      // 植物、墓標風の小道具を立体物として配置する。
+      const addPaperPatch = (
+        x: number,
+        y: number,
+        z: number,
+        width: number,
+        height: number,
+        rotationY = 0,
+      ) => {
+        addBox(width, height, 0.018, x, y, z, paperMaterial, false, rotationY);
+        addBox(width * 0.24, height * 0.08, 0.022, x - width * 0.17, y + height * 0.12, z - 0.012, darkMaterial, false, rotationY);
+        addBox(width * 0.18, height * 0.07, 0.022, x + width * 0.2, y - height * 0.15, z - 0.012, darkMaterial, false, rotationY);
+      };
+
+      // 廊下側の新聞装飾。
+      [
+        [3.68, 1.48, -2.05, 0.78, 0.56],
+        [3.68, 1.3, -0.65, 0.68, 0.52],
+        [3.68, 1.58, 0.72, 0.82, 0.6],
+        [3.68, 1.32, 2.05, 0.72, 0.5],
+      ].forEach(([x, y, z, width, height]) => addPaperPatch(x, y, z, width, height, Math.PI / 2));
+
+      // 迷路内の新聞・紙装飾。
+      [
+        [-0.05, 1.42, -2.1, 0.72, 0.52, Math.PI / 2],
+        [-0.05, 1.66, -0.8, 0.62, 0.46, Math.PI / 2],
+        [-0.05, 1.34, 0.7, 0.7, 0.54, Math.PI / 2],
+        [-0.05, 1.58, 2.15, 0.8, 0.58, Math.PI / 2],
+        [-1.7, 1.5, 0.1, 0.7, 0.5, 0],
+        [1.42, 1.45, 0.25, 0.66, 0.48, 0],
+      ].forEach(([x, y, z, width, height, rotationY]) =>
+        addPaperPatch(x, y, z, width, height, rotationY),
+      );
+
+      // 入口付近の受付・物置で見える机と段ボール。
+      addDesk(2.9, -2.55, 0, 0);
+      addBox(0.72, 0.55, 0.62, 2.85, 0.275, -3.05, woodMaterial);
+      addBox(0.55, 0.42, 0.48, 2.35, 0.21, -2.92, woodMaterial);
+      addBox(0.44, 0.36, 0.4, 3.26, 0.18, -2.72, woodMaterial);
+
+      // 出口寄りの作業机・小道具置き。
+      addDesk(2.72, 2.6, 0, 0);
+      addBox(0.72, 0.18, 0.45, 2.75, 0.66, 2.6, paperMaterial);
+      addBox(0.48, 0.5, 0.42, 3.32, 0.25, 2.78, woodMaterial);
+
+      // 写真にある墓標風オブジェクト。
+      addBox(0.46, 0.86, 0.12, -2.85, 0.43, -0.75, paperMaterial);
+      addBox(0.62, 0.08, 0.42, -2.85, 0.04, -0.75, stageMaterial);
+      addBox(0.28, 0.05, 0.025, -2.85, 0.58, -0.68, darkMaterial, false);
+      addBox(0.22, 0.05, 0.025, -2.85, 0.43, -0.68, darkMaterial, false);
+
+      // 人魂エリア付近の黄色い点状装飾。
+      [
+        [-1.65, 1.45, -2.55],
+        [-1.65, 1.75, -2.35],
+        [-1.65, 1.2, -2.15],
+        [-1.65, 1.62, -1.95],
+        [-1.65, 1.32, -1.72],
+      ].forEach(([x, y, z]) => {
+        const glowMaterial = new THREE.MeshStandardMaterial({
+          color: 0xc6a54a,
+          emissive: 0x5d4310,
+          emissiveIntensity: 0.28,
+          roughness: 0.7,
+        });
+        addCylinder(0.055, 0.025, x, y, z, [Math.PI / 2, 0, 0], glowMaterial, 18);
+      });
+
+      // 写真にある蔓・葉のかたまりを簡略化。
+      const foliageMaterial = new THREE.MeshStandardMaterial({
+        color: 0x355338,
+        roughness: 0.96,
+      });
+      [
+        [-1.1, 0.25, -0.45],
+        [-0.75, 0.2, -0.3],
+        [-1.35, 0.22, 0.15],
+        [0.7, 0.24, 0.95],
+        [0.95, 0.2, 1.18],
+      ].forEach(([x, y, z], index) => {
+        addCylinder(0.035, 0.75 + (index % 2) * 0.18, x, y + 0.35, z, [0.2, 0, index % 2 ? 0.32 : -0.28], foliageMaterial, 10);
+        addBox(0.18, 0.06, 0.11, x + 0.12, y + 0.5, z, foliageMaterial, false, index % 2 ? 0.5 : -0.5);
+        addBox(0.16, 0.06, 0.1, x - 0.1, y + 0.3, z + 0.08, foliageMaterial, false, index % 2 ? -0.4 : 0.4);
+      });
+
+      // 01 / 02 / 03 の札を白いプレートとして位置だけ再現。
+      [
+        [-0.08, 1.95, -2.35, Math.PI / 2],
+        [-0.08, 1.95, -0.35, Math.PI / 2],
+        [-0.08, 1.95, 1.65, Math.PI / 2],
+      ].forEach(([x, y, z, rotationY]) => {
+        addBox(0.34, 0.24, 0.025, x, y, z, paperMaterial, false, rotationY);
+        addBox(0.18, 0.035, 0.03, x, y, z - 0.018, darkMaterial, false, rotationY);
+      });
+
       // 写真に見える配置を参考にした天井の蛍光灯。
       [-2.15, 0, 2.15].forEach((x) => {
         [-2.35, -0.78, 0.78, 2.35].forEach((z) => {
@@ -776,7 +873,7 @@ export function ClassroomViewer({ minimal = false }: { minimal?: boolean }) {
       <div className="viewerTopbar">
         <div>
           <p>3D CLASSROOM</p>
-          <span>8m × 7m × 3m / DESK WALLS &amp; CURTAINS</span>
+          <span>8m × 7m × 3m / FESTIVAL DAY LAYOUT</span>
         </div>
         <div className="viewerActions" aria-label="3D表示の操作">
           <button
