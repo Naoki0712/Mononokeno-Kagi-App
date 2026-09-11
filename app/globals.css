@@ -4950,6 +4950,15 @@ button:focus-visible {
   stroke: transparent;
 }
 
+.schoolFloorSvg path[stroke-dasharray] {
+  stroke-linecap: square;
+}
+
+.schoolFloorPanelSvg {
+  overflow: visible;
+}
+
+
 @media (max-width: 680px) {
   .schoolDiagramAllFloors {
     min-width: 1120px;
