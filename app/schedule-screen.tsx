@@ -41,13 +41,14 @@ type MemberScheduleRow = {
 type GroupName = "Class-leader" | "Layout" | "Gimmick" | "Decoration" | "Gadget" | "Story";
 type BaseName = "Signboard" | "Yokai" | "PR";
 
-type FestivalRole = "受付" | "スタッフ" | "チェックアウト";
-type FestivalRoleKey = "reception" | "staff" | "checkout";
+type FestivalRole = "受付" | "スタッフ" | "チェックアウト" | "補欠";
+type FestivalRoleKey = "reception" | "staff" | "checkout" | "backup";
 type FestivalShift = {
   time: string;
   reception: string[];
   staff: string[];
   checkout: string[];
+  backup: string[];
 };
 
 type FestivalAssignmentRow = {
@@ -93,17 +94,18 @@ type FestivalMenu = {
 
 const FESTIVAL_SHIFTS = {
   土曜日: [
-    { time: "10:25〜11:35", reception: ["2206", "2228"], staff: ["2216", "2222", "2224", "2225", "2226", "2227"], checkout: ["2218"] },
-    { time: "11:25〜12:35", reception: ["2222", "2231"], staff: ["2205", "2209", "2212", "2221", "2230", "2233"], checkout: ["2232"] },
-    { time: "12:55〜14:05", reception: ["2214", "2205"], staff: ["2218", "2219", "2203", "2221", "2227", "2228"], checkout: ["2212"] },
-    { time: "13:55〜15:05", reception: ["2213", "2230"], staff: ["2205", "2209", "2216", "2222", "2229", "2233"], checkout: ["2220"] },
+    { time: "10:25〜11:35", reception: ["2206", "2228"], staff: ["2216", "2222", "2224", "2225", "2226", "2227"], checkout: ["2218"], backup: [] },
+    { time: "11:25〜12:35", reception: ["2222", "2231"], staff: ["2205", "2209", "2212", "2221", "2230", "2233"], checkout: ["2232"], backup: [] },
+    { time: "12:55〜14:05", reception: ["2214", "2205"], staff: ["2218", "2219", "2203", "2221", "2227", "2228"], checkout: ["2212"], backup: [] },
+    { time: "13:55〜15:05", reception: ["2213", "2230"], staff: ["2205", "2209", "2216", "2222", "2229", "2233"], checkout: ["2220"], backup: [] },
   ],
   日曜日: [
-    { time: "9:25〜10:35", reception: ["2203", "2226"], staff: ["2206", "2213", "2219", "2224", "2228", "2229"], checkout: ["2205"] },
-    { time: "10:25〜11:20", reception: ["2218", "2227"], staff: ["2203", "2213", "2214", "2222", "2225", "2216"], checkout: ["2228"] },
-    { time: "11:10〜12:05", reception: ["2216", "2219"], staff: ["2206", "2208", "2214", "2225", "2226", "2229"], checkout: ["2224"] },
-    { time: "12:55〜14:05", reception: ["2222", "2233"], staff: ["2206", "2213", "2218", "2219", "2229", "2230"], checkout: ["2208"] },
-    { time: "13:55〜15:05", reception: ["2224", "2225"], staff: ["2203", "2214", "2216", "2220", "2227", "2233"], checkout: ["2226"] },
+    { time: "9:25〜10:30", reception: ["2205", "2206"], staff: ["2207", "2214", "2219", "2222", "2224"], checkout: ["2225"], backup: ["2228", "2229"] },
+    { time: "10:20〜11:25", reception: ["2218", "2227"], staff: ["2205", "2206", "2207", "2224", "2229"], checkout: ["2228"], backup: ["2225", "2226"] },
+    { time: "11:15〜12:20", reception: ["2208", "2216"], staff: ["2207", "2213", "2218", "2219", "2225"], checkout: ["2214"], backup: ["2222", "2229"] },
+    { time: "12:10〜13:15", reception: ["2213", "2230"], staff: ["2206", "2208", "2214", "2216", "2227"], checkout: ["2219"], backup: ["2207", "2222"] },
+    { time: "13:05〜14:10", reception: ["2224", "2233"], staff: ["2206", "2213", "2218", "2225", "2230"], checkout: ["2227"], backup: ["2214", "2226"] },
+    { time: "14:00〜15:00", reception: ["2203", "2220"], staff: ["2216", "2218", "2224", "2226", "2233"], checkout: ["2229"], backup: ["2219", "2228"] },
   ],
 } satisfies Record<string, FestivalShift[]>;
 
@@ -233,6 +235,7 @@ function FestivalSchedule({
     { role: "受付", key: "reception" },
     { role: "スタッフ", key: "staff" },
     { role: "チェックアウト", key: "checkout" },
+    ...(day === "日曜日" ? [{ role: "補欠" as const, key: "backup" as const }] : []),
   ];
   const [schedule, setSchedule] = useState<Record<FestivalDay, FestivalShift[]>>(() => cloneFestivalShifts());
   const [canEdit, setCanEdit] = useState(false);
@@ -388,7 +391,13 @@ function FestivalSchedule({
       <div className="festivalTableScroll">
         <table className="festivalShiftTable">
           <thead>
-            <tr><th>時間</th><th>受付（2人）</th><th>スタッフ（6人）</th><th>チェックアウト（1人）</th></tr>
+            <tr>
+              <th>時間</th>
+              <th>受付（2人）</th>
+              <th>スタッフ（{day === "日曜日" ? 5 : 6}人）</th>
+              <th>チェックアウト（1人）</th>
+              {day === "日曜日" && <th>補欠（2人）</th>}
+            </tr>
           </thead>
           <tbody>
             {shifts.map((shift, shiftIndex) => (
@@ -467,12 +476,14 @@ function cloneFestivalShifts(): Record<FestivalDay, FestivalShift[]> {
       reception: [...shift.reception],
       staff: [...shift.staff],
       checkout: [...shift.checkout],
+      backup: [...shift.backup],
     })),
     日曜日: FESTIVAL_SHIFTS.日曜日.map((shift) => ({
       ...shift,
       reception: [...shift.reception],
       staff: [...shift.staff],
       checkout: [...shift.checkout],
+      backup: [...shift.backup],
     })),
   };
 }
