@@ -100,12 +100,12 @@ const FESTIVAL_SHIFTS = {
     { time: "13:55〜15:05", reception: ["2213", "2230"], staff: ["2205", "2209", "2216", "2222", "2229", "2233"], checkout: ["2220"], backup: [] },
   ],
   日曜日: [
-    { time: "9:25〜10:30", reception: ["2205", "2206"], staff: ["2207", "2214", "2219", "2222", "2224"], checkout: ["2225"], backup: ["2228", "2229"] },
-    { time: "10:20〜11:25", reception: ["2218", "2227"], staff: ["2205", "2206", "2207", "2224", "2229"], checkout: ["2228"], backup: ["2225", "2226"] },
-    { time: "11:15〜12:20", reception: ["2208", "2216"], staff: ["2207", "2213", "2218", "2219", "2225"], checkout: ["2214"], backup: ["2222", "2229"] },
-    { time: "12:10〜13:15", reception: ["2213", "2230"], staff: ["2206", "2208", "2214", "2216", "2227"], checkout: ["2219"], backup: ["2207", "2222"] },
-    { time: "13:05〜14:10", reception: ["2224", "2233"], staff: ["2206", "2213", "2218", "2225", "2230"], checkout: ["2227"], backup: ["2214", "2226"] },
-    { time: "14:00〜15:00", reception: ["2203", "2220"], staff: ["2216", "2218", "2224", "2226", "2233"], checkout: ["2229"], backup: ["2219", "2228"] },
+    { time: "9:25〜10:30", reception: ["2205", "2206"], staff: ["2207", "2218", "2222", "2224", "2226"], checkout: ["2227"], backup: ["2228", "2229"] },
+    { time: "10:20〜11:25", reception: ["2213", "2214"], staff: ["2206", "2218", "2222", "2224", "2226"], checkout: ["2225"], backup: ["2227", "2228"] },
+    { time: "11:15〜12:20", reception: ["2207", "2208"], staff: ["2213", "2214", "2216", "2218", "2224"], checkout: ["2225"], backup: ["2226", "2229"] },
+    { time: "12:10〜13:15", reception: ["2205", "2230"], staff: ["2207", "2208", "2213", "2214", "2222"], checkout: ["2225"], backup: ["2227", "2228"] },
+    { time: "13:05〜14:10", reception: ["2216", "2233"], staff: ["2213", "2214", "2218", "2224", "2226"], checkout: ["2229"], backup: ["2222", "2230"] },
+    { time: "14:00〜15:00", reception: ["2203", "2220"], staff: ["2205", "2207", "2216", "2225", "2227"], checkout: ["2233"], backup: ["2228", "2229"] },
   ],
 } satisfies Record<string, FestivalShift[]>;
 
@@ -176,7 +176,6 @@ export function ScheduleScreen({
   classmateId = "",
 }: ScheduleScreenProps) {
   const [view, setView] = useState<"schedule" | "manuals">("schedule");
-  const [festivalDay, setFestivalDay] = useState<FestivalDay>("土曜日");
   const client = useMemo(
     () =>
       supabaseUrl && supabasePublishableKey
@@ -192,8 +191,6 @@ export function ScheduleScreen({
   return (
     <SimpleSchedulePage onBack={onBack} title="スケジュールを確認する">
       <FestivalSchedule
-        day={festivalDay}
-        onDayChange={setFestivalDay}
         classmateId={classmateId}
         classmateToken={classmateToken}
         client={client}
@@ -219,18 +216,15 @@ export function ScheduleScreen({
 }
 
 function FestivalSchedule({
-  day,
-  onDayChange,
   classmateId,
   classmateToken,
   client,
 }: {
-  day: FestivalDay;
-  onDayChange: (day: FestivalDay) => void;
   classmateId: string;
   classmateToken: string;
   client: SupabaseClient | null;
 }) {
+  const day: FestivalDay = "日曜日";
   const roleEntries: Array<{ role: FestivalRole; key: FestivalRoleKey }> = [
     { role: "受付", key: "reception" },
     { role: "スタッフ", key: "staff" },
@@ -363,21 +357,6 @@ function FestivalSchedule({
 
   return (
     <div className="festivalSchedule">
-      <div className="festivalDayTabs" role="tablist" aria-label="文化祭の日程">
-        {(Object.keys(FESTIVAL_SHIFTS) as FestivalDay[]).map((option) => (
-          <button
-            type="button"
-            role="tab"
-            aria-selected={day === option}
-            className={day === option ? "active" : ""}
-            onClick={() => onDayChange(option)}
-            key={option}
-          >
-            {option}
-          </button>
-        ))}
-      </div>
-
       {classmateId && (
         <p className="festivalOwnSummary">
           <strong>ID {classmateId}</strong>
