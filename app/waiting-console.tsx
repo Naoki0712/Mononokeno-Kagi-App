@@ -250,7 +250,9 @@ function Lane({ title, status, tickets, now, onMove, onOpenMenu, hideTitle = fal
           {(status === "pending" || status === "waiting") && (
             <span className="waitingTicketTimes">
               <small>{formatElapsed(elapsed)}</small>
-              <small className="waitingTicketCountdown">あと {formatElapsed(countdown)}</small>
+              {status === "waiting" && (
+                <small className="waitingTicketCountdown">あと {formatElapsed(countdown)}</small>
+              )}
             </span>
           )}
         </button>;
