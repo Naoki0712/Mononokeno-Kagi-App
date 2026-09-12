@@ -20,7 +20,7 @@ type DiagramTransform = {
 
 const CLASSROOM_PLAN_IMAGES: Record<PlanVariant, string> = {
   gimmick: "/maps/MAP-Gimmick.png",
-  staff: "/maps/MAP-Staff.png",
+  staff: "/maps/MAP-Staff-combined.jpg",
 };
 
 export function ClassroomViewer({ minimal = false }: { minimal?: boolean }) {
@@ -37,6 +37,7 @@ export function ClassroomViewer({ minimal = false }: { minimal?: boolean }) {
         <InteractiveDiagram
           key={`plan-${planVariant}-${resetKey}`}
           label={`${planVariant === "gimmick" ? "ギミック" : "スタッフ"}配置の教室平面図。ホイールまたはピンチで拡大縮小できます`}
+          variant={planVariant}
         >
           <PlanDiagram variant={planVariant} />
         </InteractiveDiagram>
@@ -67,9 +68,11 @@ export function ClassroomViewer({ minimal = false }: { minimal?: boolean }) {
 function InteractiveDiagram({
   children,
   label,
+  variant,
 }: {
   children: ReactNode;
   label: string;
+  variant: PlanVariant;
 }) {
   const viewportRef = useRef<HTMLDivElement>(null);
   const [transform, setTransform] = useState<DiagramTransform>({
@@ -187,7 +190,7 @@ function InteractiveDiagram({
       onDoubleClick={() => setTransform({ scale: 1, x: 0, y: 0 })}
     >
       <div
-        className="interactiveDiagramCanvas classroomDiagramCanvas"
+        className={`interactiveDiagramCanvas classroomDiagramCanvas ${variant === "staff" ? "classroomDiagramCanvasStaff" : "classroomDiagramCanvasGimmick"}`}
         style={{
           transform: `translate3d(${transform.x}px, ${transform.y}px, 0) scale(${transform.scale})`,
         }}
