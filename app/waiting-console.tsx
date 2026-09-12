@@ -11,6 +11,7 @@ type TicketStatus = "waiting" | "called" | "pending";
 type Ticket = {
   ticket_number: number;
   status: TicketStatus;
+  issued_at: string;
   pending_at: string | null;
   manually_issued: boolean;
 };
@@ -233,7 +234,8 @@ function Lane({ title, status, tickets, now, onMove, onOpenMenu, hideTitle = fal
     <div className="waitingTicketStrip">
       {!lane.length && <span className="waitingEmptyLane">番号なし</span>}
       {lane.map((ticket) => {
-        const elapsed = ticket.pending_at ? Math.max(0, now - new Date(ticket.pending_at).getTime()) : 0;
+        const elapsedFrom = status === "pending" ? ticket.pending_at : status === "waiting" ? ticket.issued_at : null;
+        const elapsed = elapsedFrom ? Math.max(0, now - new Date(elapsedFrom).getTime()) : 0;
         const overdue = status === "pending" && elapsed >= 900000;
         return <button type="button" draggable key={ticket.ticket_number}
           className={`waitingTicket ${ticket.manually_issued ? "manual" : ""} ${overdue ? "overdue" : ""}`}
@@ -243,7 +245,7 @@ function Lane({ title, status, tickets, now, onMove, onOpenMenu, hideTitle = fal
           }}
           onDragStart={(event) => event.dataTransfer.setData("text/plain", String(ticket.ticket_number))}>
           <strong>{ticket.manually_issued && <span>✋</span>}{ticket.ticket_number}</strong>
-          {status === "pending" && <small>{formatElapsed(elapsed)}</small>}
+          {(status === "pending" || status === "waiting") && <small>{formatElapsed(elapsed)}</small>}
         </button>;
       })}
     </div>
