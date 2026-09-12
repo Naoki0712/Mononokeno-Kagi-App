@@ -5947,3 +5947,151 @@ button:focus-visible {
     font-size: 12px;
   }
 }
+
+
+/* Classroom map: final plan-only layout */
+.viewerShellPlanOnly {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  background: #050505;
+}
+
+.viewerPlanModeOnly {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px 24px 74px;
+  background: #050505;
+}
+
+.viewerPlanModeOnly .interactiveDiagramViewport {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  cursor: grab;
+  outline: 0;
+  touch-action: none;
+  overscroll-behavior: contain;
+}
+
+.viewerPlanModeOnly .interactiveDiagramViewport:active {
+  cursor: grabbing;
+}
+
+.classroomDiagramCanvas {
+  width: min(88%, 1120px);
+  aspect-ratio: 1123 / 794;
+  transform-origin: center;
+  will-change: transform;
+}
+
+.classroomPlanImageFrame {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #050505;
+}
+
+.classroomPlanImage {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.viewerBottomControls {
+  position: absolute;
+  right: 26px;
+  bottom: 20px;
+  left: 26px;
+  z-index: 12;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  pointer-events: none;
+}
+
+.viewerBottomButton {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border: 0;
+  border-radius: 0;
+  padding: 8px 12px;
+  background: transparent;
+  color: #fff;
+  font: inherit;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.viewerBottomButton svg {
+  width: 24px;
+  height: 24px;
+  flex: 0 0 auto;
+}
+
+.viewerBottomButton:hover,
+.viewerBottomButton:focus-visible {
+  background: rgb(255 255 255 / 10%);
+  outline: none;
+}
+
+.viewerVariantButton {
+  min-width: 150px;
+  justify-content: flex-end;
+  text-align: right;
+}
+
+.viewerShellPlanOnly .viewerTopbar,
+.viewerShellPlanOnly .viewerActions,
+.viewerShellPlanOnly .viewerMount,
+.viewerShellPlanOnly .planVariantToggle {
+  display: none !important;
+}
+
+@media (max-width: 680px) {
+  .viewerPlanModeOnly {
+    padding: 12px 10px 66px;
+  }
+
+  .classroomDiagramCanvas {
+    width: min(96%, 980px);
+  }
+
+  .viewerBottomControls {
+    right: 12px;
+    bottom: 12px;
+    left: 12px;
+  }
+
+  .viewerBottomButton {
+    min-height: 40px;
+    padding: 7px 9px;
+    font-size: 15px;
+  }
+
+  .viewerBottomButton svg {
+    width: 21px;
+    height: 21px;
+  }
+
+  .viewerVariantButton {
+    min-width: 124px;
+  }
+}
