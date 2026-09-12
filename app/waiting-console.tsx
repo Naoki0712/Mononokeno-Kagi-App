@@ -12,6 +12,7 @@ type Ticket = {
   ticket_number: number;
   status: TicketStatus;
   issued_at: string;
+  scheduled_at: string;
   pending_at: string | null;
   manually_issued: boolean;
 };
@@ -236,6 +237,7 @@ function Lane({ title, status, tickets, now, onMove, onOpenMenu, hideTitle = fal
       {lane.map((ticket) => {
         const elapsedFrom = status === "pending" ? ticket.pending_at : status === "waiting" ? ticket.issued_at : null;
         const elapsed = elapsedFrom ? Math.max(0, now - new Date(elapsedFrom).getTime()) : 0;
+        const countdown = Math.max(0, new Date(ticket.scheduled_at).getTime() - now);
         const overdue = status === "pending" && elapsed >= 900000;
         return <button type="button" draggable key={ticket.ticket_number}
           className={`waitingTicket ${ticket.manually_issued ? "manual" : ""} ${overdue ? "overdue" : ""}`}
@@ -245,7 +247,12 @@ function Lane({ title, status, tickets, now, onMove, onOpenMenu, hideTitle = fal
           }}
           onDragStart={(event) => event.dataTransfer.setData("text/plain", String(ticket.ticket_number))}>
           <strong>{ticket.manually_issued && <span>✋</span>}{ticket.ticket_number}</strong>
-          {(status === "pending" || status === "waiting") && <small>{formatElapsed(elapsed)}</small>}
+          {(status === "pending" || status === "waiting") && (
+            <span className="waitingTicketTimes">
+              <small>{formatElapsed(elapsed)}</small>
+              <small className="waitingTicketCountdown">あと {formatElapsed(countdown)}</small>
+            </span>
+          )}
         </button>;
       })}
     </div>

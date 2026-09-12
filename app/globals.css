@@ -2349,7 +2349,14 @@ button:focus-visible {
 
 .waitingTicket strong { font-size: var(--font-role); line-height: .9; white-space: nowrap; }
 .waitingTicket strong span { font-size: .36em; }
-.waitingTicket small { margin-top: 8px; font-size: var(--font-detail); font-weight: 700; }
+.waitingTicketTimes {
+  display: grid;
+  gap: 2px;
+  margin-top: 7px;
+  white-space: nowrap;
+}
+.waitingTicket small { font-size: clamp(12px, 1.3vw, 21px); font-weight: 700; }
+.waitingTicketCountdown { color: #ffbd59; }
 .waitingTicket.manual strong { text-decoration: underline 2px; text-underline-offset: 7px; }
 .waitingTicket.overdue { color: #ff3b30; animation: waitingBlink 1s steps(1, end) infinite; }
 @keyframes waitingBlink { 50% { opacity: .22; } }
