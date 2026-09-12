@@ -229,7 +229,7 @@ function FestivalSchedule({
     { role: "受付", key: "reception" },
     { role: "スタッフ", key: "staff" },
     { role: "チェックアウト", key: "checkout" },
-    ...(day === "日曜日" ? [{ role: "補欠" as const, key: "backup" as const }] : []),
+    { role: "補欠", key: "backup" },
   ];
   const [schedule, setSchedule] = useState<Record<FestivalDay, FestivalShift[]>>(() => cloneFestivalShifts());
   const [canEdit, setCanEdit] = useState(false);
@@ -284,7 +284,7 @@ function FestivalSchedule({
     const placement = rect.top < 340 ? "below" : "above";
     const menuWidth = Math.min(390, window.innerWidth - 24);
     const left = Math.min(window.innerWidth - menuWidth / 2 - 12, Math.max(menuWidth / 2 + 12, rect.left + rect.width / 2));
-    const dayKey = day === "土曜日" ? "sat" : "sun";
+    const dayKey = "sun" as const;
     const nextMenu: FestivalMenu = {
       dayKey,
       slot,
@@ -373,9 +373,9 @@ function FestivalSchedule({
             <tr>
               <th>時間</th>
               <th>受付（2人）</th>
-              <th>スタッフ（{day === "日曜日" ? 5 : 6}人）</th>
+              <th>スタッフ（5人）</th>
               <th>チェックアウト（1人）</th>
-              {day === "日曜日" && <th>補欠（2人）</th>}
+              <th>補欠（2人）</th>
             </tr>
           </thead>
           <tbody>
