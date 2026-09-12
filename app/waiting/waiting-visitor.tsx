@@ -3,7 +3,6 @@
 import { createClient } from "@supabase/supabase-js";
 import Image from "next/image";
 import Link from "next/link";
-import QRCode from "qrcode";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import styles from "./waiting.module.css";
 
@@ -74,11 +73,11 @@ const COPY: Record<Locale, Copy> = {
     noteStorage: "ブラウザのCookie・サイトデータなどを削除すると、発行した番号を表示できなくなる場合があります。教室到着後に削除してください。",
     remaining: "残り",
     minutes: "分",
-    soon: "まもなく",
+    soon: "まもなく呼び出します",
     arriveAt: (time) => `${time} にお越しください`,
     called: "ただいま呼び出し中",
     calledDetail: "4階 HR2-2の受付へお越しください。",
-    showAtReception: "受付に提示してください",
+    showAtReception: "この整理券番号を受付に提示してください",
     windowEnds: (time) => `${time}までにお越しください`,
     redeemed: "受付済みです",
     redeemedDetail: "受付スタッフの案内に従ってお進みください。",
@@ -107,11 +106,11 @@ const COPY: Record<Locale, Copy> = {
     noteStorage: "Deleting this browser's cookies or site data may remove your ticket from this device. Please wait until after reception.",
     remaining: "Approx.",
     minutes: "min",
-    soon: "Soon",
+    soon: "Your number will be called soon",
     arriveAt: (time) => `Please arrive at ${time}`,
     called: "Now calling your number",
     calledDetail: "Please come to reception at HR 2-2 on the 4th floor.",
-    showAtReception: "Show this code at reception",
+    showAtReception: "Show this ticket number at reception",
     windowEnds: (time) => `Please arrive by ${time}`,
     redeemed: "Checked in",
     redeemedDetail: "Please follow the reception staff's directions.",
@@ -159,7 +158,6 @@ export function WaitingVisitor({
   const [issueError, setIssueError] = useState("");
   const [issuing, setIssuing] = useState(false);
   const [now, setNow] = useState(() => Date.now());
-  const [qrUrl, setQrUrl] = useState("");
 
   const loadStatus = useCallback(
     async (token: string, quiet = false) => {
@@ -208,22 +206,6 @@ export function WaitingVisitor({
     }, ticket ? 8000 : 20000);
     return () => window.clearInterval(poll);
   }, [client, deviceToken, loadStatus, phase, ticket]);
-
-  useEffect(() => {
-    if (!deviceToken || ticket?.status !== "called") return;
-    let active = true;
-    void QRCode.toDataURL(`mononoke-waiting:v1:${deviceToken}`, {
-      width: 720,
-      margin: 2,
-      errorCorrectionLevel: "M",
-      color: { dark: "#000000", light: "#ffffff" },
-    }).then((url) => {
-      if (active) setQrUrl(url);
-    });
-    return () => {
-      active = false;
-    };
-  }, [deviceToken, ticket?.status]);
 
   const issueTicket = async (token = deviceToken) => {
     if (!client || !token) return;
@@ -283,7 +265,6 @@ export function WaitingVisitor({
           locale={locale}
           ticket={ticket}
           now={now}
-          qrUrl={qrUrl}
           issuing={issuing}
           onIssueAgain={() => void issueAnotherTicket()}
         />
@@ -377,7 +358,6 @@ function TicketView({
   locale,
   ticket,
   now,
-  qrUrl,
   issuing,
   onIssueAgain,
 }: {
@@ -385,13 +365,12 @@ function TicketView({
   locale: Locale;
   ticket: Ticket;
   now: number;
-  qrUrl: string;
   issuing: boolean;
   onIssueAgain: () => void;
 }) {
   if (ticket.status === "called") {
     return (
-      <CalledView copy={copy} locale={locale} ticket={ticket} qrUrl={qrUrl} />
+      <CalledView copy={copy} locale={locale} ticket={ticket} />
     );
   }
 
@@ -420,6 +399,16 @@ function TicketView({
   const remaining = Math.max(0, Math.ceil((Date.parse(ticket.scheduledAt) - now) / 60000));
   const urgent = remaining <= 10;
 
+  if (remaining === 0) {
+    return (
+      <section className={styles.ticketView} aria-labelledby="ticket-number">
+        <TicketNumber id="ticket-number" copy={copy} number={ticket.ticketNumber} />
+        <p className={styles.remainingLabel}>{copy.soon}</p>
+        <p className={styles.ticketHint}>{copy.noteCall}</p>
+      </section>
+    );
+  }
+
   return (
     <section className={styles.ticketView} aria-labelledby="ticket-number">
       <TicketNumber id="ticket-number" copy={copy} number={ticket.ticketNumber} />
@@ -428,8 +417,8 @@ function TicketView({
         className={`${styles.countdownCircle} ${urgent ? styles.urgent : ""}`}
         aria-live="polite"
       >
-        <strong>{remaining > 0 ? remaining : copy.soon}</strong>
-        {remaining > 0 && <span>{copy.minutes}</span>}
+        <strong>{remaining}</strong>
+        <span>{copy.minutes}</span>
       </div>
       <span className={styles.downArrow} aria-hidden="true" />
       <p className={styles.arrivalTime}>
@@ -445,12 +434,10 @@ function CalledView({
   copy,
   locale,
   ticket,
-  qrUrl,
 }: {
   copy: Copy;
   locale: Locale;
   ticket: Ticket;
-  qrUrl: string;
 }) {
   const deadline = ticket.callWindowEndsAt
     ? formatTime(ticket.callWindowEndsAt, locale)
@@ -462,20 +449,7 @@ function CalledView({
       <h1 id="called-title">{copy.called}</h1>
       <p>{copy.calledDetail}</p>
       <span className={styles.downArrow} aria-hidden="true" />
-      <div className={styles.qrFrame}>
-        {qrUrl ? (
-          <Image
-            src={qrUrl}
-            alt={locale === "ja" ? "受付確認用QRコード" : "Reception QR code"}
-            width={720}
-            height={720}
-            unoptimized
-          />
-        ) : (
-          <span>{locale === "ja" ? "QRコードを作成中…" : "Preparing QR code…"}</span>
-        )}
-      </div>
-      <strong className={styles.showQrText}>{copy.showAtReception}</strong>
+      <strong className={styles.showTicketText}>{copy.showAtReception}</strong>
       {deadline && <p className={styles.deadline}>{copy.windowEnds(deadline)}</p>}
     </section>
   );
