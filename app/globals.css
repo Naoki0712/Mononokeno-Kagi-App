@@ -2334,6 +2334,7 @@ button:focus-visible {
 }
 
 .waitingLane-called .waitingTicketStrip { border-color: #00bf63; }
+.waitingLane-redeemed .waitingTicketStrip { border-color: #00bf63; }
 .waitingLane-waiting .waitingTicketStrip { border-color: #ff751f; }
 
 .waitingTicket {
@@ -2357,9 +2358,12 @@ button:focus-visible {
 }
 .waitingTicket small { font-size: clamp(12px, 1.3vw, 21px); font-weight: 700; }
 .waitingTicketCountdown { color: #ffbd59; }
+.waitingLane-redeemed .waitingTicket { color: #00bf63; }
 .waitingTicket.manual strong { text-decoration: underline 2px; text-underline-offset: 7px; }
 .waitingTicket.overdue { color: #ff3b30; animation: waitingBlink 1s steps(1, end) infinite; }
+.waitingTicket.entryExpired { color: #00bf63; animation: waitingGreenBlink 1s steps(1, end) infinite; }
 @keyframes waitingBlink { 50% { opacity: .22; } }
+@keyframes waitingGreenBlink { 50% { opacity: .2; } }
 
 .waitingEmptyLane {
   display: grid;
