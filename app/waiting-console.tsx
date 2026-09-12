@@ -183,14 +183,13 @@ function StaffBoard({ tickets, now, busy, onMove, onAdd, onOpenMenu, onReset }: 
   return (
     <div className="waitingStaffBoard">
       <div className="waitingStaffLanes">
-        <Lane title="入場中（2つまで）" status="redeemed" tickets={tickets} now={now} onMove={onMove} onOpenMenu={onOpenMenu} />
         <Lane title="保留中" status="pending" tickets={tickets} now={now} onMove={onMove} onOpenMenu={onOpenMenu} />
         <Lane title="呼び出し中（1つだけ選択可）" status="called" tickets={tickets} now={now} onMove={onMove} onOpenMenu={onOpenMenu} />
         <div className="waitingLaneTitle waitingUpcomingTitle"><h2>呼び出し前</h2><button type="button" disabled={busy} onClick={() => void onAdd()}>✋ 手動で追加</button></div>
         <Lane title="" status="waiting" tickets={tickets} now={now} onMove={onMove} onOpenMenu={onOpenMenu} hideTitle />
       </div>
       <aside className="waitingScript">
-        <h2>整理券の管理</h2>
+        <Lane title="入場中（2つまで）" status="redeemed" tickets={tickets} now={now} onMove={onMove} onOpenMenu={onOpenMenu} />
         <button type="button" className="waitingResetButton" disabled={busy} onClick={() => void onReset()}>整理券番号をリセット</button>
       </aside>
     </div>

@@ -2552,7 +2552,6 @@ button:focus-visible {
   }
 
   .waitingStaffBoard { grid-template-columns: 1fr; aspect-ratio: auto; }
-  .waitingScript { display: none; }
   .waitingConsoleHeader .backTitle h1 { font-size: var(--font-main) !important; }
 }
 
