@@ -6,7 +6,8 @@
   min-height: 100svh;
   align-items: center;
   justify-content: center;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
   padding: 150px 24px 72px;
   background:
     radial-gradient(circle at 50% 38%, rgb(255 255 255 / 5%), transparent 34%),
@@ -175,6 +176,30 @@
   border-left: 22px solid transparent;
   content: "";
   transform: translateX(-50%);
+}
+
+.partySizeField {
+  display: flex;
+  width: min(690px, 100%);
+  align-items: center;
+  justify-content: space-between;
+  margin: 0 auto 22px;
+  border: 2px solid #fff;
+  border-radius: 18px;
+  padding: 16px 22px;
+  font-size: clamp(24px, 4.8vw, 38px);
+  text-align: left;
+}
+
+.partySizeField select {
+  min-width: 42%;
+  border: 0;
+  border-radius: 10px;
+  padding: 10px 14px;
+  background: #fff;
+  color: #000;
+  font: inherit;
+  text-align: center;
 }
 
 .issueButton {

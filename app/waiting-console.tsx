@@ -9,6 +9,7 @@ const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 type TicketStatus = "waiting" | "called" | "pending" | "redeemed";
 type Ticket = {
   ticket_number: number;
+  party_size: number;
   status: TicketStatus;
   issued_at: string;
   scheduled_at: string;
@@ -225,6 +226,7 @@ function Lane({ title, status, tickets, now, onMove, onOpenMenu, hideTitle = fal
           }}
           onDragStart={(event) => event.dataTransfer.setData("text/plain", String(ticket.ticket_number))}>
           <strong>{ticket.manually_issued && <span>✋</span>}{ticket.ticket_number}</strong>
+          <small className="waitingTicketPartySize">{ticket.party_size}人</small>
           {(status === "pending" || status === "waiting" || status === "redeemed") && (
             <span className="waitingTicketTimes">
               <small>{status === "redeemed" ? `残り ${formatElapsed(entryCountdown)}` : formatElapsed(elapsed)}</small>
@@ -248,20 +250,27 @@ function TicketActionMenu({ menu, busy, onMove, onDelete, onClose }: {
   onDelete: (number: number) => Promise<void>;
   onClose: () => void;
 }) {
-  const upTarget: TicketStatus | null = menu.status === "waiting" ? "called" : menu.status === "called" ? "redeemed" : menu.status === "pending" ? "called" : null;
-  const downTarget: TicketStatus | null = menu.status === "redeemed" ? "called" : menu.status === "called" ? "pending" : menu.status === "pending" ? "waiting" : null;
+  const upTarget: TicketStatus | null = menu.status === "waiting" ? "called" : menu.status === "pending" ? "called" : null;
+  const downTarget: TicketStatus | null = menu.status === "redeemed" ? "called" : menu.status === "pending" ? "waiting" : null;
   useEffect(() => {
     const closeOnEscape = (event: KeyboardEvent) => { if (event.key === "Escape") onClose(); };
     window.addEventListener("keydown", closeOnEscape);
     return () => window.removeEventListener("keydown", closeOnEscape);
   }, [onClose]);
   return (
-    <div className="waitingTicketMenu" role="menu" aria-label={`${menu.ticketNumber}番の操作`}
+    <div className={`waitingTicketMenu ${menu.status === "called" ? "waitingTicketMenuCalled" : ""}`} role="menu" aria-label={`${menu.ticketNumber}番の操作`}
       style={{ left: menu.left, top: menu.top }}>
-      <button type="button" role="menuitem" disabled={busy || !upTarget}
-        onClick={() => upTarget && void onMove(menu.ticketNumber, upTarget)} aria-label="上の欄へ移動">↑</button>
-      <button type="button" role="menuitem" disabled={busy || !downTarget}
-        onClick={() => downTarget && void onMove(menu.ticketNumber, downTarget)} aria-label="下の欄へ移動">↓</button>
+      {menu.status === "called" ? <>
+        <button type="button" role="menuitem" disabled={busy}
+          onClick={() => void onMove(menu.ticketNumber, "pending")}>保留中へ</button>
+        <button type="button" role="menuitem" disabled={busy}
+          onClick={() => void onMove(menu.ticketNumber, "redeemed")}>入場中へ</button>
+      </> : <>
+        <button type="button" role="menuitem" disabled={busy || !upTarget}
+          onClick={() => upTarget && void onMove(menu.ticketNumber, upTarget)} aria-label="上の欄へ移動">↑</button>
+        <button type="button" role="menuitem" disabled={busy || !downTarget}
+          onClick={() => downTarget && void onMove(menu.ticketNumber, downTarget)} aria-label="下の欄へ移動">↓</button>
+      </>}
       <button type="button" role="menuitem" className="waitingDeleteAction" disabled={busy}
         onClick={() => void onDelete(menu.ticketNumber)}>削除</button>
     </div>

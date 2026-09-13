@@ -2357,6 +2357,7 @@ button:focus-visible {
   white-space: nowrap;
 }
 .waitingTicket small { font-size: clamp(12px, 1.3vw, 21px); font-weight: 700; }
+.waitingTicketPartySize { margin-top: 5px; color: #fff; }
 .waitingTicketCountdown { color: #ffbd59; }
 .waitingLane-redeemed .waitingTicket { color: #00bf63; }
 .waitingTicket.manual strong { text-decoration: underline 2px; text-underline-offset: 7px; }
@@ -2452,6 +2453,12 @@ button:focus-visible {
   cursor: pointer;
   font-family: var(--font-cine);
   font-size: 23px;
+}
+
+.waitingTicketMenuCalled button {
+  min-width: auto;
+  padding: 0 14px;
+  white-space: nowrap;
 }
 
 .waitingTicketMenu button:hover:not(:disabled),
