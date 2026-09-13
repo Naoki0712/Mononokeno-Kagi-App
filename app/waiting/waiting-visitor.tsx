@@ -29,6 +29,8 @@ type Copy = {
   waitNow: (minutes: number) => string;
   issue: string;
   issuing: string;
+  partySize: string;
+  partyOption: (count: number) => string;
   issueStopped: string;
   issueStoppedDetail: string;
   connectionError: string;
@@ -64,6 +66,8 @@ const COPY: Record<Locale, Copy> = {
     waitNow: (minutes) => `ただいま ${minutes}分 待ち`,
     issue: "発行する",
     issuing: "発行中…",
+    partySize: "人数",
+    partyOption: (count) => `${count}人`,
     issueStopped: "現在、整理券は発行していません",
     issueStoppedDetail: "混雑時のみ整理券を発行します。通常時はそのまま4階 HR2-2へお越しください。",
     connectionError: "整理券の情報を読み込めませんでした。通信状態を確認して、もう一度お試しください。",
@@ -97,6 +101,8 @@ const COPY: Record<Locale, Copy> = {
     waitNow: (minutes) => `Current wait: about ${minutes} min`,
     issue: "Get a ticket",
     issuing: "Issuing…",
+    partySize: "Number of guests",
+    partyOption: (count) => `${count} ${count === 1 ? "person" : "people"}`,
     issueStopped: "Tickets are not being issued now",
     issueStoppedDetail: "Timed tickets are used only when it is crowded. You may go directly to HR 2-2 on the 4th floor.",
     connectionError: "Ticket information could not be loaded. Check your connection and try again.",
@@ -157,6 +163,7 @@ export function WaitingVisitor({
   const [phase, setPhase] = useState<"loading" | "ready" | "error">("loading");
   const [issueError, setIssueError] = useState("");
   const [issuing, setIssuing] = useState(false);
+  const [partySize, setPartySize] = useState(1);
   const [now, setNow] = useState(() => Date.now());
 
   const loadStatus = useCallback(
@@ -207,12 +214,13 @@ export function WaitingVisitor({
     return () => window.clearInterval(poll);
   }, [client, deviceToken, loadStatus, phase, ticket]);
 
-  const issueTicket = async (token = deviceToken) => {
+  const issueTicket = async (token = deviceToken, selectedPartySize = partySize) => {
     if (!client || !token) return;
     setIssuing(true);
     setIssueError("");
     const { data, error } = await client.rpc("waiting_issue_ticket", {
       p_device_token: token,
+      p_party_size: selectedPartySize,
     });
     setIssuing(false);
     if (error || !data?.ok) {
@@ -227,12 +235,12 @@ export function WaitingVisitor({
     setTicket(ticketFromResponse(data));
   };
 
-  const issueAnotherTicket = async () => {
+  const issueAnotherTicket = () => {
     const token = createDeviceToken();
     window.localStorage.setItem(DEVICE_TOKEN_KEY, token);
     setDeviceToken(token);
     setTicket(null);
-    await issueTicket(token);
+    setIssueError("");
   };
 
   return (
@@ -277,6 +285,8 @@ export function WaitingVisitor({
           waitMinutes={waitMinutes}
           issuing={issuing}
           issueError={issueError}
+          partySize={partySize}
+          onPartySizeChange={setPartySize}
           onIssue={() => void issueTicket()}
         />
       )}
@@ -322,6 +332,8 @@ function IssueView({
   waitMinutes,
   issuing,
   issueError,
+  partySize,
+  onPartySizeChange,
   onIssue,
 }: {
   copy: Copy;
@@ -329,12 +341,20 @@ function IssueView({
   waitMinutes: number;
   issuing: boolean;
   issueError: string;
+  partySize: number;
+  onPartySizeChange: (count: number) => void;
   onIssue: () => void;
 }) {
   return (
     <section className={styles.issueView} aria-labelledby="waiting-title">
       <h1 id="waiting-title" className={locale === "en" ? styles.englishTitle : ""}>{copy.title}</h1>
       <div className={styles.waitBubble}>{copy.waitNow(waitMinutes)}</div>
+      <label className={styles.partySizeField}>
+        <span>{copy.partySize}</span>
+        <select value={partySize} disabled={issuing} onChange={(event) => onPartySizeChange(Number(event.target.value))}>
+          {[1, 2, 3].map((count) => <option key={count} value={count}>{copy.partyOption(count)}</option>)}
+        </select>
+      </label>
       <button
         className={styles.issueButton}
         type="button"
